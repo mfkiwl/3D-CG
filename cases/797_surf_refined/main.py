@@ -19,7 +19,7 @@ import logging.config
 import os
 
 ########## INITIALIZE LOGGING ##########
-logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
+logging.config.fileConfig('../../logging.conf', disable_existing_loggers=False)
 # root logger, no __name__ as in submodules further down the hierarchy - this is very important - cost me a lot of time when I passed __name__ to the main logger
 logger = logging.getLogger('root')
 logger.info('*************************** INITIALIZING SIM ***************************')
@@ -29,82 +29,138 @@ if not os.path.exists('out/'):
     os.makedirs('out/')
     logger.info('out/ directory not present, created...')
 
+
 ########## TOP LEVEL SIM SETUP ##########
-case_name = 'boeing1_Ex'
-meshfile = 'mesh/' + 'boeing1_first_cut'
+case_name = '797_surface_fine'
+meshfile = 'mesh/' + case_name
 porder = 3
 ndim = 3
 
-# CHANGE THIS FOR THE NEXT SIM! And make the meshes go here too!
 outdir = 'out/'
-vis_filename = case_name
-build_mesh = True
-buildAF = True
+vis_filename = 'dirichlet1'
+call_pv = False
+build_mesh = False
+buildAF = False
 use_preconditioning = True
 compute_sol = True
-call_pv = False
-
 vis_filename = outdir+vis_filename
 
 ########## BCs ##########
+# # Dirichlet
+# dbc = {
+#     1: 0,
+#     2: 0,
+#     3: 0,
+#     4: 0,
+#     5: 0,
+#     6: 0,
+#     7: 0,
+#     8: 0,
+#     9: 0,
+#     10: 0,
+#     11: 0,
+#     12: 0,
+#     13: 0,
+#     14: 0,
+#     15: 0,
+#     16: 0,
+#     17: 0,
+#     18: 0,
+#     19: 0,
+#     20: 0,
+#     21: 0,
+#     22: 0,
+#     23: 0,
+#     24: 0,
+#     25: 0,
+#     26: 0,
+#     27: 0,
+#     28: 0,
+#     29: 0,
+#     30: 0,
+#     31: 0,
+#     32: 0,
+#     33: 0,
+#     34: 0,
+#     35: 0,
+#     36: 0,
+#     37: 0,
+#     38: 0,
+#     39: 0,
+#     40: 0,
+#     41: 0,
+# }
+
+
+# # Neumann
+# nbc = {
+#     42: -1,   # -X
+#     47: 1,   # +X
+
+#     43: 0,   # -Y
+#     45: 0,   # +Y
+
+#     46: 0,   # -Z
+#     44: 0,   # +Z
+# }
+
+
+
 # Dirichlet
 dbc = {
-    1: 0,
-    2: 0,
-    3: 0,
-    4: 0,
-    5: 0,
-    6: 0,
-    7: 0,
-    8: 0,
-    9: 0,
-    10: 0,
-    11: 0,
-    12: 0,
-    13: 0,
-    14: 0,
-    15: 0,
-    16: 0,
-    17: 0,
-    18: 0,
-    19: 0,
-    20: 0,
-    21: 0,
-    22: 0,
-    23: 0,
-    24: 0,
-    25: 0,
-    26: 0,
-    27: 0,
-    28: 0,
-    29: 0,
-    30: 0,
-    31: 0,
-    32: 0,
-    33: 0,
-    34: 0,
-    35: 0,
-    36: 0,
-    37: 0,
-    38: 0,
-    39: 0,
-    40: 0,
-    41: 0,
+    1: 1,
+    2: 1,
+    3: 1,
+    4: 1,
+    5: 1,
+    6: 1,
+    7: 1,
+    8: 1,
+    9: 1,
+    10: 1,
+    11: 1,
+    12: 1,
+    13: 1,
+    14: 1,
+    15: 1,
+    16: 1,
+    17: 1,
+    18: 1,
+    19: 1,
+    20: 1,
+    21: 1,
+    22: 1,
+    23: 1,
+    24: 1,
+    25: 1,
+    26: 1,
+    27: 1,
+    28: 1,
+    29: 1,
+    30: 1,
+    31: 1,
+    32: 1,
+    33: 1,
+    34: 1,
+    35: 1,
+    36: 1,
+    37: 1,
+    38: 1,
+    39: 1,
+    40: 1,
+    41: 1,
+    42: 0,
+    43: 0,
+    44: 0,
+    45: 0,
+    46: 0,
+    47: 0,
 }
-
 
 # Neumann
 nbc = {
-    138: -1,   # -X
-    139: 1,   # +X
 
-    140: 0,   # -Y
-    141: 0,   # +Y
-
-    142: 0,   # -Z
-    143: 0,   # +Z
 }
-
 
 # Eventually: add support for the neumann condition being entered as a vector dot product
 # Long term: neumann robin BC
@@ -199,7 +255,7 @@ def approx_sol_charge(p):
 
 
 if compute_sol:
-    ########## CREATE MESH ##########
+########## CREATE MESH ##########
     mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, build_mesh)
     logger.info('Converting high order mesh to CG...')
     mesh = cgmesh(mesh)
@@ -208,6 +264,7 @@ if compute_sol:
 
     logger.info('Preparing master data structure...')
     master = mkmaster.mkmaster(mesh, ndim=3, pgauss=2*mesh['porder'])
+
 
     # ########## CALCULATE APPROX SOLUTION ##########
     logger.info('Computing approximate solution')
@@ -236,14 +293,29 @@ else:
 
     logger.info('Reading solution from file...')
 
-    with open(outdir+'mesh', 'rb') as file:
-        mesh = pickle.load(file)
+    # One time code
+    mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, build_mesh)
+    logger.info('Converting high order mesh to CG...')
+    mesh = cgmesh(mesh)
+    mesh['dbc'] = dbc
+    mesh['nbc'] = nbc
+
+    # ########## CALCULATE APPROX SOLUTION ##########
+    logger.info('Computing approximate solution')
+    approx_x = np.zeros((mesh['pcg'].shape[0]))
+    for i in np.arange(mesh['tcg'].shape[0]):
+        approx_x[mesh['tcg'][i, :]] = approx_sol_charge(mesh['pcg'][mesh['tcg'][i, :], :])
+    # /One time code
+
+    # with open(outdir+'mesh', 'rb') as file:
+    #     mesh = pickle.load(file)
     with open(outdir+'master', 'rb') as file:
         master = pickle.load(file)
     with open(outdir+'sol', 'rb') as file:
         sol = pickle.load(file)
-    with open(outdir+'x0', 'rb') as file:
-        x0 = pickle.load(file)
+    # with open(outdir+'x0', 'rb') as file:
+    #     x0 = pickle.load(file)
+
 
 ########## CALC DERIVATIVES ##########
 

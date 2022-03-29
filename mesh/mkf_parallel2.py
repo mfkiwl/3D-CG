@@ -20,7 +20,7 @@ def get_face(t, face_array, f_idx_template, idx):
         elnum = idx // t.shape[1]
         nodenum = idx%t.shape[1]
 
-        if elnum % 1000 == 0 and nodenum == 0:
+        if elnum % 10000 == 0 and nodenum == 0:
             logger.info(str(elnum)+'/'+str(t.shape[0]))
         elem = t[elnum, :]
 

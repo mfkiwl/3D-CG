@@ -73,7 +73,7 @@ def call_iter(x):
         logger.info('Iteration' + str(count))
     count += 1
 
-def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildAF=True, solver='amg', case_name=None):
+def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildAF=True, solver='amg'):
 
     if mesh['porder'] == 0:
         raise ValueError('porder > 0 required for continuous galerkin')
@@ -111,42 +111,40 @@ def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildA
             F[elem, 0] += fe[:, i]
 
         logger.info('Saving F...')
-        with open(outdir+ case_name + '_F_preBCs.npy', 'wb') as file:
+        with open(outdir+ 'F_preBCs.npy', 'wb') as file:
             np.save(file, F)
 
         logger.info('Saving A...')
-        save_npz(outdir + case_name + '_A_preBCs.npz', A.asformat('csr'))
+        save_npz(outdir + 'A_preBCs.npz', A.asformat('csr'))
         logger.info('Saved A and F to disk, pre BCs')
 
     else:
         # Read from disk
         logger.info('Reading A and F from disk')
-        with open(outdir + case_name + '_F_preBCs.npy', 'rb') as file:
+        with open(outdir + 'F_preBCs.npy', 'rb') as file:
             F = np.load(file)
-        A = load_npz(outdir + case_name + '_A_preBCs.npz').asformat('lil')
+        A = load_npz(outdir + 'A_preBCs.npz').asformat('lil')
 
 
     ########## ASSIGN BCs ##########
     A, F, approx_sol = assign_bcs(master, mesh, A, F, approx_sol, issparse=True)
 
     ########## SOLVE ##########
-    logger.info('Solving...')
+    logger.info('Solving with ' + solver)
 
     start = time.perf_counter()
     if solver=='cg':
         P = lil_matrix((nnodes, nnodes))
         P.setdiag(1/A.diagonal())   # Diagonal preconditioner
-        res = splinalg.cg(A, F, M=P, x0=approx_sol, callback=call_iter)
-    # else:
-    #     lin = splinalg.aslinearoperator(A)
-    #     res = splinalg.cgs(lin, F, tol=1e-8)       # Play with this tolerance if it is taking too long to run
+        res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=1e-8, callback=call_iter, atol=0)
         logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
 
         if not res[1]:    # Successful exit
-            uh = res[0][:,None]
+            uh = np.squeeze(res[0][:,None])
             logger.info('Successfully solved with CG...')
         else:
-            raise Exception('CG did not converge, reached ' +str(res[1]) + ' iterations')
+            logger.error('CG did not converge, reached ' +str(res[1]) + ' iterations')
+            raise ValueError('CG did not converge, reached ' +str(res[1]) + ' iterations')
     elif solver=='amg':
         ml = pyamg.ruge_stuben_solver(A.tocsr())                    # construct the multigrid hierarchy
         uh = ml.solve(F, tol=1e-8)                          # solve Ax=b to a tolerance of 1e-8
