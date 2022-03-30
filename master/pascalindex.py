@@ -22,7 +22,7 @@ def pascalindex2d(k):
     nth_row = np.fliplr(nth_row)    # So it matches the 16.930 matlab code
     # And then stacks it with the index pairs of the elements in the rows of the pyramid above it
     prev_rows = pascalindex2d(k-1)
-    pindx = np.concatenate((prev_rows, nth_row), axis=0).astype(np.int)
+    pindx = np.concatenate((prev_rows, nth_row), axis=0).astype(int)
 
     return pindx
 
