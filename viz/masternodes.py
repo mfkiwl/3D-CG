@@ -7,8 +7,8 @@ def masternodes(porder,dim,elemtype):
     # ii = d0.find("Exasim");
 
     fn = '../../viz/masternodes.bin'        # Indexed relative to case run directory
-    tmp = numpy.fromfile(open(fn, "r"), dtype=numpy.float64);
-
+    with open(fn, "r") as file:
+        tmp = numpy.fromfile(file, dtype=numpy.float64);
     ndims = numpy.int_(tmp[0]);
     k1 = 1;
     k2 = k1+(ndims);
