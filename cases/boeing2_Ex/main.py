@@ -30,15 +30,14 @@ if not os.path.exists('out/'):
     logger.info('out/ directory not present, created...')
 
 ########## TOP LEVEL SIM SETUP ##########
-case_name = 'boeing2_Ex'
 meshfile = 'mesh/' + 'boeing_plane'     # No file extension!
 porder = 3
 ndim = 3
-solver = 'amg'
+solver = 'cg'
 
 # CHANGE THIS FOR THE NEXT SIM! And make the meshes go here too!
 outdir = 'out/'
-vis_filename = case_name
+vis_filename = 'boeing_plane_Ex'
 build_mesh = True
 buildAF = True
 use_preconditioning = True
@@ -313,7 +312,7 @@ if compute_sol:
 
     ########## SOLVE ##########
 
-    sol, x0 = cg_solve.cg_solve(master, mesh, forcing_zero, param, ndim, outdir, None, buildAF, solver, case_name)
+    sol, x0 = cg_solve.cg_solve(master, mesh, forcing_zero, param, ndim, outdir, None, buildAF, solver)
 
     ########## SAVE DATA ##########
 

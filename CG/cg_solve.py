@@ -69,8 +69,9 @@ def vissparse(A):
 count = 0
 def call_iter(x):
     global count
-    if count %100 == 0:
+    if count %10 == 0:
         logger.info('Iteration' + str(count))
+        # print(count)
     count += 1
 
 def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildAF=True, solver='amg'):
@@ -132,22 +133,31 @@ def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildA
     ########## SOLVE ##########
     logger.info('Solving with ' + solver)
 
-    start = time.perf_counter()
     if solver=='cg':
-        P = lil_matrix((nnodes, nnodes))
-        P.setdiag(1/A.diagonal())   # Diagonal preconditioner
-        res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=1e-8, callback=call_iter, atol=0)
+        # P = lil_matrix((nnodes, nnodes))
+        # P.setdiag(1/A.diagonal())   # Diagonal preconditioner
+
+        ml = pyamg.ruge_stuben_solver(A.tocsr(), max_levels=10)    # Multigrid preconditioner
+        P = ml.aspreconditioner()
+
+        # res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=1e-8, callback=call_iter, atol=0)
+        start = time.perf_counter()
+        res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=1e-8, atol=0)
         logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
 
         if not res[1]:    # Successful exit
             uh = np.squeeze(res[0][:,None])
             logger.info('Successfully solved with CG...')
+            logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
         else:
             logger.error('CG did not converge, reached ' +str(res[1]) + ' iterations')
             raise ValueError('CG did not converge, reached ' +str(res[1]) + ' iterations')
     elif solver=='amg':
         ml = pyamg.ruge_stuben_solver(A.tocsr())                    # construct the multigrid hierarchy
-        uh = ml.solve(F, tol=1e-8)                          # solve Ax=b to a tolerance of 1e-8
+
+        start = time.perf_counter()
+        # uh = ml.solve(F, tol=1e-9, maxiter=None, callback=call_iter)                          # solve Ax=b to a tolerance of 1e-8
+        uh = ml.solve(F, tol=1e-9, maxiter=None)                          # solve Ax=b to a tolerance of 1e-8
         logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
     elif solver == 'direct':
         uh = np.squeeze(np.linalg.solve(A.todense(), F))

@@ -118,13 +118,15 @@ def mkt2f_new(t, ndim):
         # f = np.concatenate((interior_faces, bdry_faces), axis=0)
 
         pool = mp.Pool(mp.cpu_count())
-        # pool = mp.Pool(1)
         start = time.perf_counter()
+
         result = pool.map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))
-        # print(time.perf_counter()-start)
         faces = np.asarray(result)
 
         # faces = np.asarray(list(map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))))
+
+        logger.info(str(time.perf_counter()-start))
+
         sort_idx = np.argsort(faces[:,-1])
         faces = faces[sort_idx[::-1], :]      # Separate boundary faces to end of array
 
