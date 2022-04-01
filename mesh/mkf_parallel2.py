@@ -125,7 +125,7 @@ def mkt2f_new(t, ndim):
 
         # faces = np.asarray(list(map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))))
 
-        logger.info(str(time.perf_counter()-start))
+        logger.info('Time: '+str(time.perf_counter()-start)+' s')
 
         sort_idx = np.argsort(faces[:,-1])
         faces = faces[sort_idx[::-1], :]      # Separate boundary faces to end of array
