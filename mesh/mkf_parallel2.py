@@ -1,57 +1,72 @@
 import sys
 import numpy as np
-from sympy import Eijk
+# from sympy import Eijk
 import multiprocessing as mp
 from functools import partial
 import time
 import logging
-# from mpi4py.futures import MPIPoolExecutor
 
 logger = logging.getLogger(__name__)
 
 # Given a face with a certain node pattern, the element opposite it will have that face with the nodes going in the opposite direction.
 
-def find_first(a, b):
-    result = np.where(np.all(a == b, axis=1))
-    result = result[0][0] if result[0].shape[0]>0 else -1
-    return result
+# def find_first(a, b):
+#     result = np.where(np.all(a == b, axis=1))
+#     result = result[0][0] if result[0].shape[0]>0 else -1
+#     return result
 
-# def get_face(t, face_array, f_idx_template, idx):
-#         numel, num_nodes_per_elem = t.shape
-#         elnum = idx // t.shape[1]
-#         nodenum = idx%t.shape[1]
+def Eijk(p1, p2, p3):
+    if (p1 < p2) and (p2 < p3):    # (1, 2, 3)
+        return 1
+    elif (p1<p3) and (p3<p2):    # (1, 3, 2)
+        return -1
+    elif (p2<p1) and (p1<p3):    # (2, 1, 3)
+        return -1
+    elif (p3<p1) and (p1<p2):    # (2, 3, 1)
+        return 1
+    elif (p2<p3) and (p3<p1):    # (3, 1, 2)
+        return 1
+    elif (p3<p2) and (p2<p1):    # (3, 2, 1)
+        return -1
 
-#         if elnum % 1000 == 0 and nodenum == 0:
-#             logger.info(str(elnum)+'/'+str(t.shape[0]))
-#         elem = t[elnum, :]
+def get_face(t, face_array_dict, f_idx_template, idx):
+        __, num_nodes_per_elem = t.shape
+        elnum = idx // t.shape[1]
+        nodenum = idx%t.shape[1]
 
-#         # This is the face
-#         nodes_on_face = elem[f_idx_template[nodenum, :]]
+        if elnum % 10000 == 0 and nodenum == 0:
+            logger.info(str(elnum)+'/'+str(t.shape[0]))
+        elem = t[elnum, :]
 
-#         # The face will match going backwards on the opposite element. The "opposite element idx" is what is returned by find_first
-#         idx = find_first(face_array, np.flip(nodes_on_face))
+        # This is the face
+        nodes_on_face = elem[f_idx_template[nodenum, :]]
 
-#         if idx == -1:
-#             # Insert face and elnum into the bdry_faces list
-#             face = np.concatenate((nodes_on_face, np.array([elnum, -1])))
-#         else:
-#             # magic number 3 is the number of face combintations per face - we didn't have this with line segment faces
-#             opp_elnum = idx // (num_nodes_per_elem*3)
-#             # Figure out the parity of the nodes in the face permutation
+        # The face will match going backwards on the opposite element. The "opposite element idx" is what is returned by find_first
+        # idx = find_first(face_array_dict, np.flip(nodes_on_face))
+        key = np.flip(nodes_on_face).tobytes()
+        idx = face_array_dict[key] if key in face_array_dict else -1
 
-#             sign = np.sign(
-#                 Eijk(nodes_on_face[0], nodes_on_face[1], nodes_on_face[2]))
+        if idx == -1:
+            # Insert face and elnum into the bdry_faces list
+            face = np.concatenate((nodes_on_face, np.array([elnum, -1])))
+        else:
+            # magic number 3 is the number of face combintations per face - we didn't have this with line segment faces
+            opp_elnum = idx // (num_nodes_per_elem*3)
+            # Figure out the parity of the nodes in the face permutation
 
-#             # Insert into faces list
-#             if sign > 0:    # Face nodes going CCW around element match going in order of increasing node number
-#                 face = np.concatenate(
-#                     (np.sort(nodes_on_face), np.array([elnum, opp_elnum])))
-#             elif sign < 0:    # Face nodes going CCW around OPPOSITE element match going in order of increasing node number
-#                 face = np.concatenate(
-#                     (np.sort(nodes_on_face), np.array([opp_elnum, elnum])))
-#             else:
-#                 raise ValueError('Cannot have a repeated index')
-#         return face
+            sign = np.sign(
+                Eijk(nodes_on_face[0], nodes_on_face[1], nodes_on_face[2]))
+
+            # Insert into faces list
+            if sign > 0:    # Face nodes going CCW around element match going in order of increasing node number
+                face = np.concatenate(
+                    (np.sort(nodes_on_face), np.array([elnum, opp_elnum])))
+            elif sign < 0:    # Face nodes going CCW around OPPOSITE element match going in order of increasing node number
+                face = np.concatenate(
+                    (np.sort(nodes_on_face), np.array([opp_elnum, elnum])))
+            else:
+                raise ValueError('Cannot have a repeated index')
+        return face
 
 def mkt2f_new(t, ndim):
 
@@ -85,6 +100,7 @@ def mkt2f_new(t, ndim):
 
         for elnum, elem in enumerate(t_ext):
             for i, node in enumerate(elem[:-1]):
+                raise NotImplementedError('Dict lookup not supported for 2d yet')
                 idx = find_first(face_array, np.flip(elem[i:i+2]))      # The face will match going backwards on the opposite element. The "opposite element idx" is what is returned by find_first
                 idx = idx // num_nodes_per_elem
                 t2t[elnum, i] = idx
@@ -111,6 +127,8 @@ def mkt2f_new(t, ndim):
         face_array[1::3, :] = np.roll(face_array[1::3, :], -1, axis=1)
         face_array[2::3, :] = np.roll(face_array[2::3, :], -2, axis=1)
 
+        face_array_dict = {face_entry.tobytes():idx for idx, face_entry in enumerate(face_array)}
+
         # Need to number the boundary nodes correctly after being added at the end of the array in t2f
         # Need to account for taking duplicates out 
 
@@ -118,16 +136,14 @@ def mkt2f_new(t, ndim):
         # interior_faces = np.unique(np.asarray(interior_faces), axis=0)
         # f = np.concatenate((interior_faces, bdry_faces), axis=0)
         
-        # start = time.perf_counter()
+        start = time.perf_counter()
 
-        with open('setup_arrays.npy', 'wb') as f:
-            np.save(f, t)
-            np.save(f, face_array)
-            np.save(f, f_idx_template)
+        # with open('setup_arrays.npy', 'wb') as f:
+        #     np.save(f, t)
+        #     np.save(f, face_array)
+        #     np.save(f, f_idx_template)
         
-        logger.info('Done saving t and face_array to disk, exiting...')
-
-        exit()
+        # logger.info('Done saving t and face_array to disk, exiting...')
 
         # with open('setup_arrays.npy', 'rb') as f:
         #     t = np.load(f)
@@ -135,12 +151,14 @@ def mkt2f_new(t, ndim):
         #     f_idx_template = np.load(f)
 
         # with MPIPoolExecutor() as pool:
-        with mp.Pool(mp.cpu_count()) as pool:
-            result = pool.map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))
+        # with mp.Pool(mp.cpu_count()) as pool:
+        #     result = pool.map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))
 
-        faces = np.asarray(result)
+        # faces = np.asarray(result)
 
         # faces = np.asarray(list(map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))))
+        faces = np.asarray(list(map(partial(get_face, t, face_array_dict, f_idx_template), np.arange(t.size))))
+
 
         logger.info(str(time.perf_counter()-start))
 
@@ -154,8 +172,6 @@ def mkt2f_new(t, ndim):
 
         t2f = np.zeros_like(t)
         for iface, face in enumerate(f):
-            # if iface != 3:
-            #     continue
 
             nodes_on_face = face[:3]
             elem1 = face[3]
@@ -163,10 +179,6 @@ def mkt2f_new(t, ndim):
             elem1_nodes = t[elem1, :]
             mask1 = np.in1d(elem1_nodes, nodes_on_face)
             elem1_face_nodes = t[elem1, :][f_idx_template[~mask1,:]].ravel()
-            # print(elem1_face_nodes)
-
-            # print(nodes_on_face)
-            # print(elem1)
 
             bdry_flag = False
             elem2 = face[4]
@@ -175,7 +187,6 @@ def mkt2f_new(t, ndim):
             else:
                 elem2_nodes = t[elem2, :]
                 mask2 = np.in1d(elem2_nodes, nodes_on_face)
-                # elem2_face_nodes = t[elem2, :][f_idx_template[~mask2, :]]
 
             if np.sign(Eijk(nodes_on_face[0], nodes_on_face[1], nodes_on_face[2])) == np.sign(Eijk(elem1_face_nodes[0], elem1_face_nodes[1], elem1_face_nodes[2])):
                 t2f[elem1,:][~mask1] = iface+1        # ~mask gives us the node index for the face
@@ -185,8 +196,6 @@ def mkt2f_new(t, ndim):
                 t2f[elem1,:][~mask1] = -(iface+1)        # ~mask gives us the node index for the face
                 if not bdry_flag:
                     t2f[elem2,:][~mask2] = iface+1        # ~mask gives us the node index for the face
-            # print(t2f)
-            # exit()
 
     return f, t2f
 

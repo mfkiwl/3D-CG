@@ -21,20 +21,15 @@ def Eijk(p1, p2, p3):
         return -1
 
 def find_first(a, b):
-    # result = np.where(np.all(a == b, axis=1))
-    # result = result[0][0] if result[0].shape[0]>0 else -1
     key = b.tobytes()
-    if key in a:
-        return a[key]
-    else:
-        return -1
+    return a[key] if key in a else -1
 
-def get_face(t, face_array, f_idx_template, idx):
-        numel, num_nodes_per_elem = t.shape
+def get_face(t, face_array_dict, f_idx_template, idx):
+        __, num_nodes_per_elem = t.shape
         elnum = idx // t.shape[1]
         nodenum = idx%t.shape[1]
 
-        if elnum % 1000 == 0 and nodenum == 0:
+        if elnum % 10000 == 0 and nodenum == 0:
             print(str(elnum)+'/'+str(t.shape[0]))
         elem = t[elnum, :]
 
@@ -42,7 +37,9 @@ def get_face(t, face_array, f_idx_template, idx):
         nodes_on_face = elem[f_idx_template[nodenum, :]]
 
         # The face will match going backwards on the opposite element. The "opposite element idx" is what is returned by find_first
-        idx = find_first(face_array, np.flip(nodes_on_face))
+        # idx = find_first(face_array_dict, np.flip(nodes_on_face))
+        key = np.flip(nodes_on_face).tobytes()
+        idx = face_array_dict[key] if key in face_array_dict else -1
 
         if idx == -1:
             # Insert face and elnum into the bdry_faces list
@@ -117,10 +114,6 @@ if __name__ == '__main__':
             print('Time ', time.perf_counter()-start)
 
             faces = np.asarray(gathered_result).reshape((-1, 5))
-            # print('here')
-            # print(faces.shape)
-            # for face in faces:
-            #     print(face)
             with open('faces.npy', 'wb') as f:
                 np.save(f, faces)
             
@@ -128,22 +121,23 @@ if __name__ == '__main__':
 
     else:
         with open('setup_arrays.npy', 'rb') as f:
-            t = np.load(f)
-            face_array = np.load(f)
+            t = np.load(f).astype(np.int32)
+            face_array = np.load(f).astype(np.int32)
             f_idx_template = np.load(f)
 
+        print('Converting face_array to dict')
+        face_array_dict = {face_entry.tobytes():idx for idx, face_entry in enumerate(face_array)}
+
         start = time.perf_counter()
-        with mp.Pool(mp.cpu_count()) as pool:
-            result = pool.map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))
+        # with mp.Pool(mp.cpu_count()) as pool:
+        #     result = pool.map(partial(get_face, t, face_array_dict, f_idx_template), np.arange(t.size))
+
+        result = np.asarray(list(map(partial(get_face, t, face_array_dict, f_idx_template), np.arange(t.size))))
 
         print('Time ', time.perf_counter()-start)
 
         faces = np.asarray(result)
-        # print(t.shape)
-        # print(faces.shape)
-        # for face in faces:
-        #     print(face)
-        # exit()
+
         with open('faces.npy', 'wb') as f:
             np.save(f, faces)
         
