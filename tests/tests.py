@@ -23,13 +23,13 @@ class FEM3DTests(unittest.TestCase):
     def test_3d_homogeneous_dirichlet_cube_porder3_mesh24_solver_cg(self):
         os.chdir('./cube_sine_homogeneous_dirichlet')
         import cube_sine_homogeneous_dirichlet.main
-        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube24', 'cg'), 0.019172725886541175, places=10)
+        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube24', 'cg'), 0.01917272673225523, places=10)
         os.chdir('../')
 
     def test_3d_homogeneous_dirichlet_cube_porder3_mesh24_solver_amg(self):
         os.chdir('./cube_sine_homogeneous_dirichlet')
         import cube_sine_homogeneous_dirichlet.main
-        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube24', 'amg'), 0.019172731204138982, places=10)
+        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube24', 'amg'), 0.019172726399754425, places=10)
         os.chdir('../')
 
     # Mesh of 100 tets
@@ -42,26 +42,26 @@ class FEM3DTests(unittest.TestCase):
     def test_3d_homogeneous_dirichlet_cube_porder3_mesh100_solver_cg(self):
         os.chdir('./cube_sine_homogeneous_dirichlet')
         import cube_sine_homogeneous_dirichlet.main
-        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube100', 'cg'), 0.00908719483965248, places=10)
+        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube100', 'cg'), 0.00908719413783865, places=10)
         os.chdir('../')
 
     def test_3d_homogeneous_dirichlet_cube_porder3_mesh100_solver_amg(self):
         os.chdir('./cube_sine_homogeneous_dirichlet')
         import cube_sine_homogeneous_dirichlet.main
-        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube100', 'amg'), 0.009087201373723763, places=10)
+        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube100', 'amg'), 0.009087195898815015, places=10)
         os.chdir('../')
 
     # Mesh of 4591 tets
     def test_3d_homogeneous_dirichlet_cube_porder3_mesh4591_solver_cg(self):
         os.chdir('./cube_sine_homogeneous_dirichlet')
         import cube_sine_homogeneous_dirichlet.main
-        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube4591', 'cg'), 0.00014311246139742106, places=10)
+        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube4591', 'cg'), 0.00014311178044668083, places=10)
         os.chdir('../')
 
     def test_3d_homogeneous_dirichlet_cube_porder3_mesh4591_solver_amg(self):
         os.chdir('./cube_sine_homogeneous_dirichlet')
         import cube_sine_homogeneous_dirichlet.main
-        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube4591', 'amg'), 0.0007345822001354474, places=10)
+        self.assertAlmostEqual(cube_sine_homogeneous_dirichlet.main.test_3d_cube_sine_homoegeneous_dirichlet(3, 'cube4591', 'amg'), 0.00014311365057617653, places=10)
         os.chdir('../')
 
     # Zero forcing function with dirichlet BCs - linear solution
@@ -75,13 +75,13 @@ class FEM3DTests(unittest.TestCase):
     def test_3d_linear_cube_porder3_mesh24_solver_cg_dirichlet(self):
         os.chdir('./cube_linear_dirichlet')
         import cube_linear_dirichlet.main
-        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube24', 'cg'), 9.618263246968795e-08, places=10)
+        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube24', 'cg'), 1.8157378972594174e-07, places=10)
         os.chdir('../')
 
     def test_3d_linear_cube_porder3_mesh24_solver_amg_dirichlet(self):
         os.chdir('./cube_linear_dirichlet')
         import cube_linear_dirichlet.main
-        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube24', 'amg'), 3.9033551280098777e-07, places=10)
+        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube24', 'amg'), 2.2296259727383472e-08, places=10)
         os.chdir('../')
 
     # Mesh of 100 tets
@@ -94,26 +94,26 @@ class FEM3DTests(unittest.TestCase):
     def test_3d_linear_cube_porder3_mesh100_solver_cg_dirichlet(self):
         os.chdir('./cube_linear_dirichlet')
         import cube_linear_dirichlet.main
-        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube100', 'cg'), 3.620905547063735e-07, places=10)
+        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube100', 'cg'), 2.654373962296397e-07, places=10)
         os.chdir('../')
 
     def test_3d_linear_cube_porder3_mesh100_solver_amg_dirichlet(self):
         os.chdir('./cube_linear_dirichlet')
         import cube_linear_dirichlet.main
-        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube100', 'amg'), 2.24349044913863e-06, places=10)
+        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube100', 'amg'), 2.1957569323882709e-07, places=10)
         os.chdir('../')
 
     # Mesh of 4591 tets
     def test_3d_linear_cube_porder3_mesh4591_solver_cg_dirichlet(self):
         os.chdir('./cube_linear_dirichlet')
         import cube_linear_dirichlet.main
-        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube4591', 'cg'), 6.0267761911037e-06, places=10)
+        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube4591', 'cg'), 3.340236856219647e-06, places=10)
         os.chdir('../')
 
     def test_3d_linear_cube_porder3_mesh4591_solver_amg_dirichlet(self):
         os.chdir('./cube_linear_dirichlet')
         import cube_linear_dirichlet.main
-        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube4591', 'amg'), 0.07752102670151978, places=10)
+        self.assertAlmostEqual(cube_linear_dirichlet.main.test_3d_cube_linear_dirichlet(3, 'cube4591', 'amg'), 3.95948403109081e-06, places=10)
         os.chdir('../')
 
     # Zero forcing function with Neumann BC
@@ -127,13 +127,13 @@ class FEM3DTests(unittest.TestCase):
     def test_3d_linear_cube_porder3_mesh24_solver_cg_neumann(self):
         os.chdir('./cube_linear_neumann')
         import cube_linear_neumann.main
-        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube24', 'cg'), 1.0414178408524322e-09, places=10)
+        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube24', 'cg'), 1.1038926439610464e-09, places=10)
         os.chdir('../')
 
     def test_3d_linear_cube_porder3_mesh24_solver_amg_neumann(self):
         os.chdir('./cube_linear_neumann')
         import cube_linear_neumann.main
-        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube24', 'amg'), 1.5148356236061034e-08, places=10)
+        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube24', 'amg'), 1.3353449457298439e-09, places=10)
         os.chdir('../')
 
     # Mesh of 24 tets
@@ -146,26 +146,26 @@ class FEM3DTests(unittest.TestCase):
     def test_3d_linear_cube_porder3_mesh100_solver_cg_neumann(self):
         os.chdir('./cube_linear_neumann')
         import cube_linear_neumann.main
-        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube100', 'cg'), 1.3854304370397585e-09, places=10)
+        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube100', 'cg'), 5.85582138334928e-10, places=10)
         os.chdir('../')
 
     def test_3d_linear_cube_porder3_mesh100_solver_amg_neumann(self):
         os.chdir('./cube_linear_neumann')
         import cube_linear_neumann.main
-        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube100', 'amg'), 0.00031411458360119937, places=10)
+        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube100', 'amg'), 1.8555359471150723e-09, places=10)
         os.chdir('../')
 
     # Mesh of 4591 tets
     def test_3d_linear_cube_porder3_mesh4591_solver_cg_neumann(self):
         os.chdir('./cube_linear_neumann')
         import cube_linear_neumann.main
-        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube4591', 'cg'), 1.2027956408644513e-09, places=10)
+        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube4591', 'cg'), 5.111532974666488e-09, places=10)
         os.chdir('../')
 
     def test_3d_linear_cube_porder3_mesh4591_solver_amg_neumann(self):
         os.chdir('./cube_linear_neumann')
         import cube_linear_neumann.main
-        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube4591', 'amg'), 0.5037930045775671, places=10)
+        self.assertAlmostEqual(cube_linear_neumann.main.test_3d_cube_linear_neumann(3, 'cube4591', 'amg'), 2.60547150521262e-09, places=10)
         os.chdir('../')
 
     # Sinusoidal forcing function with Neumann BC
@@ -180,14 +180,14 @@ class FEM3DTests(unittest.TestCase):
     def test_3d_sine_cube_porder3_mesh24_solver_cg_neumann(self):
         os.chdir('./cube_sine_neumann')
         import cube_sine_neumann.main
-        self.assertRaises(ValueError, cube_sine_neumann.main.test_3d_cube_sine_neumann, 3, 'cube24', 'cg')
+        self.assertAlmostEqual(cube_sine_neumann.main.test_3d_cube_sine_neumann(3, 'cube24', 'cg'), 0.10932362562649503, places=10)
         os.chdir('../')
         pass
 
     def test_3d_sine_cube_porder3_mesh24_solver_amg_neumann(self):
         os.chdir('./cube_sine_neumann')
         import cube_sine_neumann.main
-        self.assertAlmostEqual(cube_sine_neumann.main.test_3d_cube_sine_neumann(3, 'cube24', 'amg'), 0.10932475985404677, places=10)
+        self.assertAlmostEqual(cube_sine_neumann.main.test_3d_cube_sine_neumann(3, 'cube24', 'amg'), 0.10932360960969444, places=10)
         os.chdir('../')
 
     # Mesh of 100 tets
@@ -200,26 +200,26 @@ class FEM3DTests(unittest.TestCase):
     def test_3d_sine_cube_porder3_mesh100_solver_cg_neumann(self):
         os.chdir('./cube_sine_neumann')
         import cube_sine_neumann.main
-        self.assertAlmostEqual(cube_sine_neumann.main.test_3d_cube_sine_neumann(3, 'cube100', 'cg'), 0.009627469761016012, places=10)
+        self.assertAlmostEqual(cube_sine_neumann.main.test_3d_cube_sine_neumann(3, 'cube100', 'cg'), 0.009626927844773618, places=10)
         os.chdir('../')
 
     def test_3d_sine_cube_porder3_mesh100_solver_amg_neumann(self):
         os.chdir('./cube_sine_neumann')
         import cube_sine_neumann.main
-        self.assertAlmostEqual(cube_sine_neumann.main.test_3d_cube_sine_neumann(3, 'cube100', 'amg'), 0.0096560620319009, places=10)
+        self.assertAlmostEqual(cube_sine_neumann.main.test_3d_cube_sine_neumann(3, 'cube100', 'amg'), 0.00962747846680665, places=10)
         os.chdir('../')
 
     # Mesh of 4591 tets
     def test_3d_sine_cube_porder3_mesh4591_solver_cg_neumann(self):
         os.chdir('./cube_sine_neumann')
         import cube_sine_neumann.main
-        self.assertAlmostEqual(cube_sine_neumann.main.test_3d_cube_sine_neumann(3, 'cube4591', 'cg'), 0.0001654806516502294, places=10)
+        self.assertAlmostEqual(cube_sine_neumann.main.test_3d_cube_sine_neumann(3, 'cube4591', 'cg'), 0.0001760139216239187, places=10)
         os.chdir('../')
 
     def test_3d_sine_cube_porder3_mesh4591_solver_amg_neumann(self):
         os.chdir('./cube_sine_neumann')
         import cube_sine_neumann.main
-        self.assertAlmostEqual(cube_sine_neumann.main.test_3d_cube_sine_neumann(3, 'cube4591', 'amg'), 0.3732191700124986, places=10)
+        self.assertAlmostEqual(cube_sine_neumann.main.test_3d_cube_sine_neumann(3, 'cube4591', 'amg'), 0.00018070625629817982, places=10)
         os.chdir('../')
 
     # Sinusoidal forcing function with Dirichlet BC
@@ -233,13 +233,13 @@ class FEM3DTests(unittest.TestCase):
     def test_3d_sine_cube_porder3_mesh24_solver_cg_dirichlet(self):
         os.chdir('./cube_sine_dirichlet')
         import cube_sine_dirichlet.main
-        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube24', 'cg'), 0.048132397953759565, places=10)
+        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube24', 'cg'), 0.04813213613091227, places=10)
         os.chdir('../')
 
     def test_3d_sine_cube_porder3_mesh24_solver_amg_dirichlet(self):
         os.chdir('./cube_sine_dirichlet')
         import cube_sine_dirichlet.main
-        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube24', 'amg'), 0.04813250432172467, places=10)
+        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube24', 'amg'), 0.048132224297690374, places=10)
         os.chdir('../')
 
     # Mesh of 100 tets
@@ -252,26 +252,26 @@ class FEM3DTests(unittest.TestCase):
     def test_3d_sine_cube_porder3_mesh100_solver_cg_dirichlet(self):
         os.chdir('./cube_sine_dirichlet')
         import cube_sine_dirichlet.main
-        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube100', 'cg'), 0.00733266104389263, places=10)
+        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube100', 'cg'), 0.007332607101341426, places=10)
         os.chdir('../')
 
     def test_3d_sine_cube_porder3_mesh100_solver_amg_dirichlet(self):
         os.chdir('./cube_sine_dirichlet')
         import cube_sine_dirichlet.main
-        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube100', 'amg'), 0.007333087953788953, places=10)
+        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube100', 'amg'), 0.007332663981044041, places=10)
         os.chdir('../')
 
     # Mesh of 4591 tets
     def test_3d_sine_cube_porder3_mesh4591_solver_cg_dirichlet(self):
         os.chdir('./cube_sine_dirichlet')
         import cube_sine_dirichlet.main
-        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube4591', 'cg'), 0.000169693142116345, places=10)
+        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube4591', 'cg'), 0.00016798028525166764, places=10)
         os.chdir('../')
 
     def test_3d_sine_cube_porder3_mesh4591_solver_amg_dirichlet(self):
         os.chdir('./cube_sine_dirichlet')
         import cube_sine_dirichlet.main
-        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube4591', 'amg'), 0.06511536603526791, places=10)
+        self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube4591', 'amg'), 0.0001705728968711684, places=10)
         os.chdir('../')
 
 if __name__ == '__main__':

@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-# from sympy import Eijk
 import multiprocessing as mp
 from functools import partial
 import time
@@ -10,12 +9,8 @@ logger = logging.getLogger(__name__)
 
 # Given a face with a certain node pattern, the element opposite it will have that face with the nodes going in the opposite direction.
 
-# def find_first(a, b):
-#     result = np.where(np.all(a == b, axis=1))
-#     result = result[0][0] if result[0].shape[0]>0 else -1
-#     return result
-
 def Eijk(p1, p2, p3):
+    # Implementation of the levi-cevita permutation tensor
     if (p1 < p2) and (p2 < p3):    # (1, 2, 3)
         return 1
     elif (p1<p3) and (p3<p2):    # (1, 3, 2)
@@ -42,8 +37,7 @@ def get_face(t, face_array_dict, f_idx_template, idx):
         nodes_on_face = elem[f_idx_template[nodenum, :]]
 
         # The face will match going backwards on the opposite element. The "opposite element idx" is what is returned by find_first
-        # idx = find_first(face_array_dict, np.flip(nodes_on_face))
-        key = np.flip(nodes_on_face).tobytes()
+        key = np.flip(nodes_on_face).tobytes()     # Dict keys must be immutable
         idx = face_array_dict[key] if key in face_array_dict else -1
 
         if idx == -1:
@@ -128,31 +122,11 @@ def mkt2f_new(t, ndim):
 
         face_array_dict = {face_entry.tobytes():idx for idx, face_entry in enumerate(face_array)}
 
-        # Need to number the boundary nodes correctly after being added at the end of the array in t2f
-        # Need to account for taking duplicates out 
-
-        # bdry_faces = np.asarray(bdry_faces)
-        # interior_faces = np.unique(np.asarray(interior_faces), axis=0)
-        # f = np.concatenate((interior_faces, bdry_faces), axis=0)
-        
         start = time.perf_counter()
 
-        # with open('setup_arrays.npy', 'wb') as f:
-        #     np.save(f, t)
-        #     np.save(f, face_array)
-        #     np.save(f, f_idx_template)
-        
-        # logger.info('Done saving t and face_array to disk, exiting...')
-
-        # with open('setup_arrays.npy', 'rb') as f:
-        #     t = np.load(f)
-        #     face_array = np.load(f)
-        #     f_idx_template = np.load(f)
-
-        # with MPIPoolExecutor() as pool:
+        # Uncomment for parallel processing
         # with mp.Pool(mp.cpu_count()) as pool:
         #     result = pool.map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))
-
         # faces = np.asarray(result)
 
         # faces = np.asarray(list(map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))))
