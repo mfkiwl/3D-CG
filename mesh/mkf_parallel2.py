@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from sympy import Eijk
+# from sympy import Eijk
 import multiprocessing as mp
 from functools import partial
 import time
@@ -9,6 +9,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Given a face with a certain node pattern, the element opposite it will have that face with the nodes going in the opposite direction.
+
+def Eijk(p1, p2, p3):
+    if (p1 < p2) and (p2 < p3):    # (1, 2, 3)
+        return 1
+    elif (p1<p3) and (p3<p2):    # (1, 3, 2)
+        return -1
+    elif (p2<p1) and (p1<p3):    # (2, 1, 3)
+        return -1
+    elif (p3<p1) and (p1<p2):    # (2, 3, 1)
+        return 1
+    elif (p2<p3) and (p3<p1):    # (3, 1, 2)
+        return 1
+    elif (p3<p2) and (p2<p1):    # (3, 2, 1)
+        return -1
 
 def find_first(a, b):
     result = np.where(np.all(a == b, axis=1))
@@ -38,8 +52,7 @@ def get_face(t, face_array, f_idx_template, idx):
             opp_elnum = idx // (num_nodes_per_elem*3)
             # Figure out the parity of the nodes in the face permutation
 
-            sign = np.sign(
-                Eijk(nodes_on_face[0], nodes_on_face[1], nodes_on_face[2]))
+            sign = np.sign(Eijk(nodes_on_face[0], nodes_on_face[1], nodes_on_face[2]))
 
             # Insert into faces list
             if sign > 0:    # Face nodes going CCW around element match going in order of increasing node number
@@ -122,6 +135,11 @@ def mkt2f_new(t, ndim):
 
         result = pool.map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))
         faces = np.asarray(result)
+        print(t.shape)
+        print(faces.shape)
+        for face in faces:
+            print(face)
+        exit()
 
         # faces = np.asarray(list(map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))))
 
