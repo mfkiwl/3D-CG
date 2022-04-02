@@ -16,7 +16,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def mkmesh_cube(porder, ndim, meshfile, build_mesh):
+def mkmesh_cube(porder, ndim, meshfile, build_mesh, mesh_scale_factor=1.0):
 
     mesh_save = meshfile + '_processed'
 
@@ -32,6 +32,8 @@ def mkmesh_cube(porder, ndim, meshfile, build_mesh):
         mesh = process_mesh(meshfile, ndim, 4, 2)
         gmsh_mapping = {0: {'node_ID': [15, 1, 2, 4], 'nnodes': [1, 2, 3, 4]}, 1: {'node_ID': [15, 1, 3, 5], 'nnodes': [1, 2, 4, 8]}}     # Maps
         mesh['gmsh_mapping'] = gmsh_mapping
+
+        mesh['p'] *= mesh_scale_factor
         mesh['porder'] = porder
         mesh['ndim'] = ndim
         mesh['elemtype'] = 0    # 0 for simplex elements (triangles/tets), 1 for quads/hexes

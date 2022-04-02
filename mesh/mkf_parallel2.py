@@ -54,8 +54,7 @@ def get_face(t, face_array_dict, f_idx_template, idx):
             opp_elnum = idx // (num_nodes_per_elem*3)
             # Figure out the parity of the nodes in the face permutation
 
-            sign = np.sign(
-                Eijk(nodes_on_face[0], nodes_on_face[1], nodes_on_face[2]))
+            sign = np.sign(Eijk(nodes_on_face[0], nodes_on_face[1], nodes_on_face[2]))
 
             # Insert into faces list
             if sign > 0:    # Face nodes going CCW around element match going in order of increasing node number
@@ -160,7 +159,7 @@ def mkt2f_new(t, ndim):
         faces = np.asarray(list(map(partial(get_face, t, face_array_dict, f_idx_template), np.arange(t.size))))
 
 
-        logger.info(str(time.perf_counter()-start))
+        logger.info('Time: '+str(time.perf_counter()-start)+' s')
 
         sort_idx = np.argsort(faces[:,-1])
         faces = faces[sort_idx[::-1], :]      # Separate boundary faces to end of array
