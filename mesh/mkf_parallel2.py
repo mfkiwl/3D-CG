@@ -5,6 +5,7 @@ import multiprocessing as mp
 from functools import partial
 import time
 import logging
+# from mpi4py.futures import MPIPoolExecutor
 
 logger = logging.getLogger(__name__)
 
@@ -15,42 +16,42 @@ def find_first(a, b):
     result = result[0][0] if result[0].shape[0]>0 else -1
     return result
 
-def get_face(t, face_array, f_idx_template, idx):
-        numel, num_nodes_per_elem = t.shape
-        elnum = idx // t.shape[1]
-        nodenum = idx%t.shape[1]
+# def get_face(t, face_array, f_idx_template, idx):
+#         numel, num_nodes_per_elem = t.shape
+#         elnum = idx // t.shape[1]
+#         nodenum = idx%t.shape[1]
 
-        if elnum % 10000 == 0 and nodenum == 0:
-            logger.info(str(elnum)+'/'+str(t.shape[0]))
-        elem = t[elnum, :]
+#         if elnum % 1000 == 0 and nodenum == 0:
+#             logger.info(str(elnum)+'/'+str(t.shape[0]))
+#         elem = t[elnum, :]
 
-        # This is the face
-        nodes_on_face = elem[f_idx_template[nodenum, :]]
+#         # This is the face
+#         nodes_on_face = elem[f_idx_template[nodenum, :]]
 
-        # The face will match going backwards on the opposite element. The "opposite element idx" is what is returned by find_first
-        idx = find_first(face_array, np.flip(nodes_on_face))
+#         # The face will match going backwards on the opposite element. The "opposite element idx" is what is returned by find_first
+#         idx = find_first(face_array, np.flip(nodes_on_face))
 
-        if idx == -1:
-            # Insert face and elnum into the bdry_faces list
-            face = np.concatenate((nodes_on_face, np.array([elnum, -1])))
-        else:
-            # magic number 3 is the number of face combintations per face - we didn't have this with line segment faces
-            opp_elnum = idx // (num_nodes_per_elem*3)
-            # Figure out the parity of the nodes in the face permutation
+#         if idx == -1:
+#             # Insert face and elnum into the bdry_faces list
+#             face = np.concatenate((nodes_on_face, np.array([elnum, -1])))
+#         else:
+#             # magic number 3 is the number of face combintations per face - we didn't have this with line segment faces
+#             opp_elnum = idx // (num_nodes_per_elem*3)
+#             # Figure out the parity of the nodes in the face permutation
 
-            sign = np.sign(
-                Eijk(nodes_on_face[0], nodes_on_face[1], nodes_on_face[2]))
+#             sign = np.sign(
+#                 Eijk(nodes_on_face[0], nodes_on_face[1], nodes_on_face[2]))
 
-            # Insert into faces list
-            if sign > 0:    # Face nodes going CCW around element match going in order of increasing node number
-                face = np.concatenate(
-                    (np.sort(nodes_on_face), np.array([elnum, opp_elnum])))
-            elif sign < 0:    # Face nodes going CCW around OPPOSITE element match going in order of increasing node number
-                face = np.concatenate(
-                    (np.sort(nodes_on_face), np.array([opp_elnum, elnum])))
-            else:
-                raise ValueError('Cannot have a repeated index')
-        return face
+#             # Insert into faces list
+#             if sign > 0:    # Face nodes going CCW around element match going in order of increasing node number
+#                 face = np.concatenate(
+#                     (np.sort(nodes_on_face), np.array([elnum, opp_elnum])))
+#             elif sign < 0:    # Face nodes going CCW around OPPOSITE element match going in order of increasing node number
+#                 face = np.concatenate(
+#                     (np.sort(nodes_on_face), np.array([opp_elnum, elnum])))
+#             else:
+#                 raise ValueError('Cannot have a repeated index')
+#         return face
 
 def mkt2f_new(t, ndim):
 
@@ -116,11 +117,27 @@ def mkt2f_new(t, ndim):
         # bdry_faces = np.asarray(bdry_faces)
         # interior_faces = np.unique(np.asarray(interior_faces), axis=0)
         # f = np.concatenate((interior_faces, bdry_faces), axis=0)
+        
+        # start = time.perf_counter()
 
-        pool = mp.Pool(mp.cpu_count())
-        start = time.perf_counter()
+        with open('setup_arrays.npy', 'wb') as f:
+            np.save(f, t)
+            np.save(f, face_array)
+            np.save(f, f_idx_template)
+        
+        logger.info('Done saving t and face_array to disk, exiting...')
 
-        result = pool.map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))
+        exit()
+
+        # with open('setup_arrays.npy', 'rb') as f:
+        #     t = np.load(f)
+        #     face_array = np.load(f)
+        #     f_idx_template = np.load(f)
+
+        # with MPIPoolExecutor() as pool:
+        with mp.Pool(mp.cpu_count()) as pool:
+            result = pool.map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))
+
         faces = np.asarray(result)
 
         # faces = np.asarray(list(map(partial(get_face, t, face_array, f_idx_template), np.arange(t.size))))
