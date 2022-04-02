@@ -30,7 +30,8 @@ if not os.path.exists('out/'):
     logger.info('out/ directory not present, created...')
 
 ########## TOP LEVEL SIM SETUP ##########
-meshfile = 'mesh/' + 'boeing_plane'     # No file extension!
+meshfile = 'mesh/' + 'boeing_plane_final'     # No file extension!
+scale_factor =  # INPUT SCALE FACTOR HERE!!!
 porder = 3
 ndim = 3
 solver = 'cg'
@@ -295,7 +296,7 @@ def approx_sol_charge(p):
 
 if compute_sol:
     ########## CREATE MESH ##########
-    mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, build_mesh)
+    mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, build_mesh, scale_factor)
     logger.info('Converting high order mesh to CG...')
     mesh = cgmesh(mesh)
     mesh['dbc'] = dbc
