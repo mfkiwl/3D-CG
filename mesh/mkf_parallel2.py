@@ -170,7 +170,7 @@ def mkt2f_new(t, ndim):
                 if not bdry_flag:
                     t2f[elem2,:][~mask2] = iface+1        # ~mask gives us the node index for the face
 
-    return f, t2f
+    return f.astype(np.int32), t2f.astype(np.int32)
 
 
 if __name__ == '__main__':

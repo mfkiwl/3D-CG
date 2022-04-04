@@ -183,9 +183,10 @@ def gmshcall(filename, ndim, elemtype, elemtype_face=None):
 
         for key in phys_grp_dict:       # Key is the surface # (1-indexed)
             nodes_on_surf = surf_elem[surf_elem[:, 0] == phys_grp_dict[key]['idx'], :]      # This list includes the face index and normal vectors
-            unique_nodes_on_surf = np.unique(nodes_on_surf[:, 1:4])        # surface node info is contained in cols 1, 2, and 3 of surf_elem
+            unique_nodes_on_surf = np.unique(nodes_on_surf[:, 1:4]).astype(np.int32)        # surface node info is contained in cols 1, 2, and 3 of surf_elem
             
-            phys_grp_dict[key]['nodes'] = unique_nodes_on_surf
+            # phys_grp_dict[key]['nodes'] = unique_nodes_on_surf
+            phys_grp_dict[key]['nodes'] = {key.tobytes():None for key in unique_nodes_on_surf}
 
             pts = nodes[unique_nodes_on_surf, :]
             # Find bounding box of domain
@@ -210,13 +211,13 @@ def gmshcall(filename, ndim, elemtype, elemtype_face=None):
             for key in phys_grp_dict:       # Key is the surface # (1-indexed)
                 if phys_grp_dict[key]['idx'] == axis_pts[1,0]:
                     # Create the normal array and set the normals to -1
-                    phys_grp_dict[key]['normals'] = np.tile(neg_normal_vec, (phys_grp_dict[key]['nodes'].shape[0], 1))     # Tiles the normal vector the number of times as there are elements on the surface
+                    phys_grp_dict[key]['normals'] = np.tile(neg_normal_vec, (len(phys_grp_dict[key]['nodes']), 1))     # Tiles the normal vector the number of times as there are elements on the surface
 
             # Take surface of maximum axis val
             for key in phys_grp_dict:       # Key is the surface # (1-indexed)
                 if phys_grp_dict[key]['idx'] == axis_pts[1,1]:
                     # Create the normal array and set the normals to -1
-                    phys_grp_dict[key]['normals'] = np.tile(-neg_normal_vec, (phys_grp_dict[key]['nodes'].shape[0], 1))     # Tiles the normal vector the number of times as there are elements on the surface
+                    phys_grp_dict[key]['normals'] = np.tile(-neg_normal_vec, (len(phys_grp_dict[key]['nodes']), 1))     # Tiles the normal vector the number of times as there are elements on the surface
 
         return nodes, mesh_t, phys_grp_dict
     else:

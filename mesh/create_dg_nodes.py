@@ -51,10 +51,6 @@ def create_dg_nodes(mesh, ndim):
         for i_elem, elem in enumerate(mesh['t']):
             # Define affine transformation
 
-            # # Pull points that make up the transformed cardinal vectors v1 and v2
-            # f1 = mesh['t2f'][i_elem][2]     # Face index of vector 1
-            # f2 = mesh['t2f'][i_elem][1]     # Face index of vector 2
-
             # Reverting to 0-indexing form 1-indexing of t2f
             v1 = mesh['p'][elem[1], :] - mesh['p'][elem[0], :]  # v1 = p1->p2
             v2 = mesh['p'][elem[2], :] - mesh['p'][elem[0], :]  # v2 = p1->p3

@@ -1,5 +1,7 @@
 import numpy as np
+import pickle
 
+# @profile
 def assign_BC_flags(mesh):
     """
     Maps physical groups contained in mesh.pg to the face array in mesh.f
@@ -26,7 +28,7 @@ def assign_BC_flags(mesh):
     # Loop through each boundary face
     for iface, face in enumerate(mesh['f'][mesh['f'][:, -1] < 0, :]):
         # Pull the nodes on the face (first three nodes)
-        nodes_on_face = face[:nnodes_per_face]
+        nodes_on_face = face[:nnodes_per_face]#.astype(np.int32)
         # This is the element that has the face on the boundary
         elem = face[nnodes_per_face]
 
@@ -40,7 +42,15 @@ def assign_BC_flags(mesh):
             pg_nodes = pg_dict[phys_group]['nodes']
 
             # If all the nodes are contained within the pg nodes
-            if set(nodes_on_face).issubset(set(pg_nodes)):
+            # if np.all([node.tobytes() in pg_nodes for node in nodes_on_face]):  # The dict keys must be of the same datatype (int32)
+
+            if mesh['ndim'] == 2:
+                face_bool = (nodes_on_face[0].tobytes() in pg_nodes) and (nodes_on_face[1].tobytes() in pg_nodes)
+
+            elif mesh['ndim'] == 3:
+                face_bool = (nodes_on_face[0].tobytes() in pg_nodes) and (nodes_on_face[1].tobytes() in pg_nodes) and (nodes_on_face[2].tobytes() in pg_nodes)
+
+            if face_bool:
                 # Assign the boundary flag to the negative boundary ID
                 mesh['f'][bdry_faces_start_idx+iface, -1] = - \
                     pg_dict[phys_group]['idx']
@@ -53,3 +63,11 @@ def assign_BC_flags(mesh):
         mesh['t2f_bdry'] = t2f_bdry
 
     return mesh
+
+
+if __name__ == '__main__':
+    print('here')
+    with open('boeing_plane_final_processed', 'rb') as file:
+        mesh = pickle.load(file)
+    assign_BC_flags(mesh)
+    print('done')

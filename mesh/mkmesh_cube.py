@@ -44,6 +44,11 @@ def mkmesh_cube(porder, ndim, meshfile, build_mesh, mesh_scale_factor=1.0):
         logger.info('Mesh: master nodes')
         mesh['plocal'], mesh['tlocal'], _, _, _, _, _ = master_nodes(porder, 3)
 
+        # with open(mesh_save, 'wb') as file:
+        #     pickle.dump(mesh, file)
+        # print('exiting')
+        # exit()
+
         # set boundary numbers
         logger.info('Mesh: assigning BC flags')
         mesh = assign_BC_flags(mesh)
