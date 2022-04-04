@@ -1,8 +1,11 @@
 import numpy as np
 import sys
 sys.path.insert(0, '../master')
+sys.path.insert(0, '../util')
 from shap import shape3d
 import logging
+from math_helper_fcns import inv
+
 
 logger = logging.getLogger(__name__)
 
@@ -26,28 +29,16 @@ def grad_calc(dgnodes, master, sol, idx):
     DU_DETA = DPHI_DETA.T@sol_pts[:, None]    # DU_DETA
     DU_DGAMMA = DPHI_DGAMMA.T@sol_pts[:, None]    # DU_DGAMMA
 
-
-    J00 = DPHI_DXI.T@ho_pts[:, 0]     # DX_DXI
-    J01 = DPHI_DXI.T@ho_pts[:, 1]     # DY_DXI
-    J02 = DPHI_DXI.T@ho_pts[:, 2]     # DZ_DXI
-    J10 = DPHI_DETA.T@ho_pts[:, 0]    # DX_DETA
-    J11 = DPHI_DETA.T@ho_pts[:, 1]    # DY_DETA
-    J12 = DPHI_DETA.T@ho_pts[:, 2]    # DZ_DETA
-    J20 = DPHI_DGAMMA.T@ho_pts[:, 0]    # DX_DGAMMA
-    J21 = DPHI_DGAMMA.T@ho_pts[:, 1]    # DY_DGAMMA
-    J22 = DPHI_DGAMMA.T@ho_pts[:, 2]    # DZ_DGAMMA
-
-
     J = np.zeros((npts, 3, 3))
-    J[:, 0, 0] = J00
-    J[:, 0, 1] = J01
-    J[:, 0, 2] = J02
-    J[:, 1, 0] = J10
-    J[:, 1, 1] = J11
-    J[:, 1, 2] = J12
-    J[:, 2, 0] = J20
-    J[:, 2, 1] = J21
-    J[:, 2, 2] = J22
+    J[:, 0, 0] = DPHI_DXI.T@ho_pts[:, 0]     # DX_DXI
+    J[:, 0, 1] = DPHI_DXI.T@ho_pts[:, 1]     # DY_DXI
+    J[:, 0, 2] = DPHI_DXI.T@ho_pts[:, 2]     # DZ_DXI
+    J[:, 1, 0] = DPHI_DETA.T@ho_pts[:, 0]    # DX_DETA
+    J[:, 1, 1] = DPHI_DETA.T@ho_pts[:, 1]    # DY_DETA
+    J[:, 1, 2] = DPHI_DETA.T@ho_pts[:, 2]    # DZ_DETA
+    J[:, 2, 0] = DPHI_DGAMMA.T@ho_pts[:, 0]    # DX_DGAMMA
+    J[:, 2, 1] = DPHI_DGAMMA.T@ho_pts[:, 1]    # DY_DGAMMA
+    J[:, 2, 2] = DPHI_DGAMMA.T@ho_pts[:, 2]    # DZ_DGAMMA
 
     # holds du/dx vals, size (nplocal, 1)
     DU_Dx = np.zeros_like(DU_DXI)
@@ -56,12 +47,11 @@ def grad_calc(dgnodes, master, sol, idx):
     # holds du/dZ vals, size (nplocal, 1)
     DU_Dz = np.zeros_like(DU_DGAMMA)
 
+    J_inv,__ = inv(J)
 
     for i in np.arange(npts):
         # Make this vectorized for efficiency
-        J_inv = np.linalg.inv(J[i, :, :])
-
-        tmp = J_inv@np.array([DU_DXI[i], DU_DETA[i], DU_DGAMMA[i]])
+        tmp = J_inv[i,:,:]@np.array([DU_DXI[i], DU_DETA[i], DU_DGAMMA[i]])
         DU_Dx[i] = tmp[0]
         DU_Dy[i] = tmp[1]
         DU_Dz[i] = tmp[2]

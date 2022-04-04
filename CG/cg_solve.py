@@ -28,8 +28,6 @@ def assign_bcs(master, mesh, A, F, approx_sol, issparse=True):
         # Find the index that the face is in in t2f
         loc_face_idx = np.where(mesh['t2f'][bdry_elem, :] == facenum)[0][0]     #try np.abs here?
 
-        # logger.info(master['perm'])     # It might be an issue with perm - it fails at high orders. Look more into what perm does
-        # logger.info(loc_face_idx)
         # Pull the local nodes on that face from permface - we don't want to include all the nodes in the element
         loc_face_nodes = master['perm'][:, loc_face_idx]
 
@@ -67,7 +65,7 @@ def vissparse(A):
     plt.show()
 
 count = 0
-def call_iter(x):
+def call_iter(__):
     global count
     if count %10 == 0:
         logger.info('Iteration' + str(count))
@@ -105,12 +103,13 @@ def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildA
         F = np.zeros((nnodes, 1))
 
         logger.info('Loading matrix...')
+        start = time.perf_counter()
         for i, elem in enumerate(mesh['tcg']):
             if i %10000 == 0:
                 logger.info(str(i)+'/'+str(ae.shape[0]))
             A[elem[:, None], elem] += ae[i, :, :]
             F[elem, 0] += fe[:, i]
-
+        logger.info('Loading matrix took '+ str(time.perf_counter()-start)+' s')
         logger.info('Saving F...')
         with open(outdir+ 'F_preBCs.npy', 'wb') as file:
             np.save(file, F)

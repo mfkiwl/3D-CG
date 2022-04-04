@@ -1,8 +1,6 @@
 import shelve
 import sys
 import numpy as np
-# from mkt2f import mkt2f
-# from mkt2t_f_t2f import mkt2f_new
 from mkf_parallel2 import mkt2f_new
 from create_dg_nodes import create_dg_nodes
 sys.path.insert(0, '../util')
@@ -16,7 +14,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def mkmesh_cube(porder, ndim, meshfile, build_mesh, mesh_scale_factor=1.0):
+def mkmesh_cube(porder, ndim, meshfile, build_mesh, scale_factor=1.0, stepfile=None, body_surfs=None):
 
     mesh_save = meshfile + '_processed'
 
@@ -33,7 +31,14 @@ def mkmesh_cube(porder, ndim, meshfile, build_mesh, mesh_scale_factor=1.0):
         gmsh_mapping = {0: {'node_ID': [15, 1, 2, 4], 'nnodes': [1, 2, 3, 4]}, 1: {'node_ID': [15, 1, 3, 5], 'nnodes': [1, 2, 4, 8]}}     # Maps
         mesh['gmsh_mapping'] = gmsh_mapping
 
-        mesh['p'] *= mesh_scale_factor
+        mesh['meshfile'] = meshfile+'.msh'
+
+        mesh['body_surfs'] = body_surfs
+        mesh['stepfile'] = stepfile
+        mesh['scale_factor'] = scale_factor
+        mesh['p'] *= scale_factor
+        mesh['bbox_after_scale'] = {'x': [np.min(mesh['p'][:,0]), np.max(mesh['p'][:,0])], 'y': [np.min(mesh['p'][:,1]), np.max(mesh['p'][:,1])], 'z': [np.min(mesh['p'][:,2]), np.max(mesh['p'][:,2])]}
+
         mesh['porder'] = porder
         mesh['ndim'] = ndim
         mesh['elemtype'] = 0    # 0 for simplex elements (triangles/tets), 1 for quads/hexes
@@ -43,11 +48,6 @@ def mkmesh_cube(porder, ndim, meshfile, build_mesh, mesh_scale_factor=1.0):
 
         logger.info('Mesh: master nodes')
         mesh['plocal'], mesh['tlocal'], _, _, _, _, _ = master_nodes(porder, 3)
-
-        # with open(mesh_save, 'wb') as file:
-        #     pickle.dump(mesh, file)
-        # print('exiting')
-        # exit()
 
         # set boundary numbers
         logger.info('Mesh: assigning BC flags')

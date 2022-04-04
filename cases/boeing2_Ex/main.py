@@ -17,6 +17,7 @@ import calc_derivative
 import logging
 import logging.config
 import os
+import helper_fcns
 
 ########## INITIALIZE LOGGING ##########
 logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
@@ -32,6 +33,7 @@ if not os.path.exists('out/'):
 
 ########## TOP LEVEL SIM SETUP ##########
 meshfile = 'mesh/' + 'boeing_plane_final'     # No file extension!
+stepfile = 'mesh/boeing_plane_no_landing_gear.STEP'
 case_select = 'Ex'
 porder = 3
 ndim = 3
@@ -46,6 +48,13 @@ compute_sol = True
 call_pv = False
 
 vis_filename = outdir+vis_filename
+
+stabilizers = [20, 26, 51, 85, 72, 95, 34, 38, 87, 108, 97, 116]
+nose = [39, 78, 33, 48, 99, 118, 84, 106]
+fuselage = [107, 117, 122, 130, 131, 134]
+engines = [16, 17, 18, 19, 31, 32, 59, 60, 57, 58, 89, 90]
+wings = [121, 119, 101, 103, 79, 82, 41, 45, 27, 30, 6, 11, 2, 3, 132, 137, 126, 136, 123, 124, 109, 114, 88, 93, 56, 69, 35, 36]
+body_surfs = stabilizers + nose + fuselage + engines + wings
 
 ########## GEOMETRY SETUP ##########
 pt_1_fuselage = np.array([8547.42, 1505.00, 5678.37])
@@ -87,7 +96,7 @@ param = {'kappa': 1, 'c': np.array([0, 0, 0]), 's': 0}
 
 if compute_sol:
     ########## CREATE MESH ##########
-    mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, build_mesh, scale_factor)
+    mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, build_mesh, scale_factor, stepfile, body_surfs)
     logger.info('Converting high order mesh to CG...')
     mesh = cgmesh(mesh)
     mesh['dbc'] = dbc
@@ -100,11 +109,11 @@ if compute_sol:
     logger.info('Computing approximate solution')
     approx_x = np.zeros((mesh['pcg'].shape[0]))
     for i in np.arange(mesh['tcg'].shape[0]):
-        approx_x[mesh['tcg'][i, :]] = approx_sol_charge(mesh['pcg'][mesh['tcg'][i, :], :])
+        approx_x[mesh['tcg'][i, :]] = helper_fcns.approx_sol_charge(mesh['pcg'][mesh['tcg'][i, :], :])
 
     ########## SOLVE ##########
 
-    sol, x0 = cg_solve.cg_solve(master, mesh, forcing_zero, param, ndim, outdir, None, buildAF, solver)
+    sol, x0 = cg_solve.cg_solve(master, mesh, helper_fcns.forcing_zero, param, ndim, outdir, None, buildAF, solver)
 
     ########## SAVE DATA ##########
 
