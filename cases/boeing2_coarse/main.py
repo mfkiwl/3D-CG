@@ -41,7 +41,7 @@ solver = 'cg'
 
 outdir = 'out/'
 vis_filename = 'boeing_plane_Ex_coarse'
-build_mesh = False
+build_mesh = True
 buildAF = True
 use_preconditioning = True
 compute_sol = True
@@ -50,20 +50,22 @@ vis_filename = outdir+vis_filename
 visorder = 3
 viz_labels = {'scalars': {0: 'Potential'}, 'vectors': {0: 'Potential Gradient'}}
 
-# stabilizers = [20, 26, 51, 85, 72, 95, 34, 38, 87, 108, 97, 116]
-# nose = [39, 78, 33, 48, 99, 118, 84, 106]
+
+fuselage_dia = 3.76     # This is the fuselage of the 737 in m
+stabilizers = [20, 26, 51, 85, 72, 95, 34, 38, 87, 108, 97, 116]
+nose = [39, 78, 33, 48, 99, 118, 84, 106]
 fuselage = [107, 117, 122, 130, 131, 134]
-# engines = [16, 17, 18, 19, 31, 32, 59, 60, 57, 58, 89, 90]
-# wings = [121, 119, 101, 103, 79, 82, 41, 45, 27, 30, 6, 11, 2, 3, 132, 137, 126, 136, 123, 124, 109, 114, 88, 93, 56, 69, 35, 36]
-# body_surfs = stabilizers + nose + fuselage + engines + wings
-body_surfs = fuselage
+engines = [16, 17, 18, 19, 31, 32, 59, 60, 57, 58, 89, 90]
+wings = [121, 119, 101, 103, 79, 82, 41, 45, 27, 30, 6, 11, 2, 3, 132, 137, 126, 136, 123, 124, 109, 114, 88, 93, 56, 69, 35, 36]
+body_surfs = stabilizers + nose + fuselage + engines + wings
+# body_surfs = fuselage
 
 ########## GEOMETRY SETUP ##########
 pt_1_fuselage = np.array([8547.42, 1505.00, 5678.37])
 pt_2_fuselage = np.array([8547.42, -1505.00, 5678.37])
 
-r_fuselage = np.linalg.norm(pt_1_fuselage-pt_2_fuselage)
-scale_factor =  1/r_fuselage    # Normalize mesh by the fuselage radius
+r_fuselage_msh = np.linalg.norm(pt_1_fuselage-pt_2_fuselage)/2
+scale_factor =  fuselage_dia/r_fuselage_msh    # Normalize mesh by the fuselage radius and rescale so that mesh dimensions are in meters
 
 ########## BCs ##########
 surf_faces = np.arange(137)+1   # Faces are 1-indexed
@@ -110,24 +112,12 @@ if compute_sol:
     with open('approx_charge_vec.npy', 'wb') as file:
         np.save(file, approx_charge)
 
-    # Saving mesh to disk
-    with open('mesh_save', 'wb') as file:
-        pickle.dump(mesh, file)
-
-    # with open('approx_charge_vec.npy', 'rb') as file:
-    #     approx_charge=np.load(file)
-
-    # with open('mesh_save', 'rb') as file:
-    #     mesh = pickle.load(file)
-
     logger.info('Visualizing approx solution...')
     viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=approx_charge)
 
-    exit()
-
     ########## SOLVE ##########
 
-    sol, x0 = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_zero, param, ndim, outdir, None, buildAF, solver)
+    sol, x0 = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_zero, param, ndim, outdir, np.squeeze(approx_charge), buildAF, solver)
 
     ########## SAVE DATA ##########
 
