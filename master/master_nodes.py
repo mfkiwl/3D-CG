@@ -140,23 +140,6 @@ def master_nodes(porder, ndim):
             permnodes = np.asarray(vertex_list)
             permface = np.asarray(permedge).T
 
-            # permedge = {0: [], 1: [], 2: [], 3: [], 4: [], 5: []}      # Edges on the master tetrahedron
-            # for i, pt in enumerate(plocal):
-            #     if pt[2] == 0 and pt[3] == 0:   # Along vector [1, 2] in master element
-            #         permedge[0].append(i)
-            #     elif pt[1] == 0 and pt[3] == 0:   # Along vector [1, 3] in master element
-            #         permedge[1].append(i)
-            #     elif pt[1] == 0 and pt[2] == 0:   # Along vector [1, 4] in master element
-            #         permedge[2].append(i)
-            #     elif pt[0] == 0 and pt[3] == 0:   # Along vector [2, 3] in master element
-            #         permedge[3].append(i)
-            #     elif pt[0] == 0 and pt[2] == 0:   # Along vector [2, 4] in master element
-            #         permedge[4].append(i)
-            #     elif pt[0] == 0 and pt[1] == 0:   # Along vector [3, 4] in master element
-            #         permedge[5].append(i)
-
-            # permedge = np.asarray(permedge).T
-
             permedge = np.zeros((porder+1, 6))
                         # 1->2 1->3 1->4 2->3       3->4                            4->2
             permedge[0,:] = [0, 0, 0, porder, int((porder+1)*(porder+2)/2-1), int((porder+1)*(porder+2)*(porder+3)/6-1)]

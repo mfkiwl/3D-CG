@@ -6,7 +6,7 @@ sys.path.append('../../viz')
 sys.path.append('../../CG')
 import numpy as np
 from import_util import load_mat
-# import viz_driver
+import viz
 from cgmesh import cgmesh
 import mkmesh_cube
 import mkmaster
@@ -65,7 +65,6 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     porder = 3
     ndim = 3
     visorder = 6
-
     labels = {'scalars': {0: 'Temperature'}, 'vectors': {0: 'Gradient'}}
 
     ########## BCs ##########
@@ -99,7 +98,7 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     ########## SOLVE ##########
 
     # sol = cg_solve(master, mesh, forcing_cube, param, ndim, outdir, buildAF, use_preconditioning)
-    sol, _ = cg_solve.cg_solve(master, mesh, forcing_cube, param, ndim, outdir, approx_sol=None, buildAF=True, solver=solver)
+    sol, _ = cg_solve.cg_solve(master, mesh, forcing_cube, param, ndim, outdir, approx_sol=None, buildAF=buildAF, solver=solver)
 
     ########## SAVE DATA ##########
 
@@ -127,12 +126,10 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     logger.info('L-inf error: '+str(norm_error))
     ########## CALC DERIVATIVES ##########
 
-    # Verify this derivative calc
     logger.info('Calculating derivatives')
-    grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
-    result = np.concatenate((sol_reshaped[:,None,:], grad.transpose(1,2,0)), axis=1)
+    grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)[None,:,:]
 
     # ########## VISUALIZE SOLUTION ##########
-    # viz_driver.viz_driver(mesh, master, result, vis_filename, call_pv)
+    viz.visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad)
 
     return norm_error

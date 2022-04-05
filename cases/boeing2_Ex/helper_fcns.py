@@ -96,22 +96,6 @@ def approx_sol_charge(mesh):
 
     return approx_charge
 
-def reshape_field(mesh, data, case):
-    if case == 'to_array':
-        # Reshape solution from column vector into high order array
-        data_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
-        for ielem, __ in enumerate(mesh['dgnodes']):
-            data_reshaped[:,ielem] = data[mesh['tcg'][ielem,:]]
-
-    elif case == 'to_column':
-        # Reshape back into a column vector from high order array
-        data_reshaped = np.zeros((mesh['pcg'].shape[0]))
-        for ielem, __ in enumerate(mesh['dgnodes']):
-            data_reshaped[mesh['tcg'][ielem,:]] = data[:,ielem]
-
-    return data_reshaped
-
-
 # def approx_sol_charge(p):
 
 #     # Assumes the plane is aligned with the x-direction
