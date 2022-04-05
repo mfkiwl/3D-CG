@@ -155,9 +155,10 @@ sol_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
 for i in np.arange(mesh['t'].shape[0]):          # Set dirichlet BC
     sol_reshaped[:, i] = sol[mesh['tcg'][i, :], 0]
 
-grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
+grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)[None,:,:]     # Broadcasts array to 3 dimensions. This allows for future support of multiple vector fields
 result = np.concatenate((sol_reshaped[:,None,:], grad.transpose(1,2,0)), axis=1)
 
 ########## VISUALIZE SOLUTION ##########
 logger.info('Running visualization script...')
+
 viz_driver.viz_driver(mesh, master, result, vis_filename, call_pv)

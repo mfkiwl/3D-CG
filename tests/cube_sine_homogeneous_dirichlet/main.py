@@ -6,7 +6,7 @@ sys.path.append('../../viz')
 sys.path.append('../../CG')
 import numpy as np
 from import_util import load_mat
-import viz_driver
+# import viz_driver
 from cgmesh import cgmesh
 import mkmesh_cube
 import mkmaster
@@ -16,6 +16,7 @@ import calc_derivative
 import os
 import logging
 import logging.config
+
 
 def exact_cube(p):
     m = 1
@@ -57,12 +58,15 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     outdir = 'out/'
     meshfile = '../data/'+meshfile
     vis_filename = 'cube_sol'
-    call_pv = False
+    call_pv = True
     build_mesh = True
     buildAF = True
     vis_filename = outdir+vis_filename
     porder = 3
     ndim = 3
+    visorder = 6
+
+    labels = {'scalars': {0: 'Temperature'}, 'vectors': {0: 'Gradient'}}
 
     ########## BCs ##########
     # Dirichlet
@@ -129,5 +133,6 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     result = np.concatenate((sol_reshaped[:,None,:], grad.transpose(1,2,0)), axis=1)
 
     # ########## VISUALIZE SOLUTION ##########
-    viz_driver.viz_driver(mesh, master, result, vis_filename, call_pv)
+    # viz_driver.viz_driver(mesh, master, result, vis_filename, call_pv)
+
     return norm_error

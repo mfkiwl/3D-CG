@@ -20,7 +20,7 @@ With the points laid out, input the above to fill in the data at the high order 
 
 """
 
-def interpolate_high_order(porder_lo, porder_hi, ndim, lo_scalars=None, lo_vectors=None):
+def interpolate_high_order(mesh_lo, mesh_hi, lo_scalars=None, lo_vectors=None):
     """
     Interpolates a low order scalar or vector field onto a high order mesh
 
@@ -28,35 +28,36 @@ def interpolate_high_order(porder_lo, porder_hi, ndim, lo_scalars=None, lo_vecto
     ho_mesh must be given like mesh[dgnodes]
     """
 
-    if ndim == 3:
-        if lo_scalars is not None:
+    ndim = mesh_lo['ndim']
+    porder_lo = mesh_lo['porder']
+    porder_hi = mesh_hi['porder']
 
-            # Get ho pts to evaluate at - this is plocal for the high order
+    if lo_scalars is not None:
 
-            # ploc_hi, __, _, _, _, _, _ = master_nodes.master_nodes(porder_hi, ndim)
+        # Get ho pts to evaluate at - this is plocal for the high order
+        # # Low order shape functions sampled at the high order nodal pts - this will be a tall matrix when it is usually square (when setting up the shape functions)
+        ploc_lo, __, _, _, _, _, _ = master_nodes.master_nodes(porder_lo, ndim)
+        ploc_hi, __, _, _, _, _, _ = master_nodes.master_nodes(porder_hi, ndim)
 
-            # # Low order shape functions sampled at the high order nodal pts - this will be a tall matrix when it is usually square (when setting up the shape functions)
-            ploc_lo, __, _, _, _, _, _ = master_nodes.master_nodes(porder_lo, ndim)
-            ploc_hi, __, _, _, _, _, _ = master_nodes.master_nodes(porder_hi, ndim)
-
-            # Low order shape functions sampled at the high order nodal pts - this will be a tall matrix when it is usually square (when setting up the shape functions)
+        # Low order shape functions sampled at the high order nodal pts - this will be a tall matrix when it is usually square (when setting up the shape functions)
+        if ndim == 3:
             shap_ho = shap.shape3d(porder_lo, ploc_lo, ploc_hi)[:,:,0]  # Only need the values of the basis functions
-
-            # For each element: weight the lo scalars with the lo fcns sampled at the ho pts and combine
-            numel = lo_scalars.shape[1]
-            hi_scalars = np.zeros((shap_ho.shape[0], numel))
-            for i,__ in enumerate(lo_scalars.T):    # Iterates through rows
-                hi_scalars[:,i] = np.squeeze(shap_ho@lo_scalars[:,i][:,None])
-
         else:
-            hi_scalars = None
+            shap_ho = shap.shape2d(porder_lo, ploc_lo, ploc_hi)[:,:,0]  # Only need the values of the basis functions
 
+        # For each element: weight the lo scalars with the lo fcns sampled at the ho pts and combine
+        numel = lo_scalars.shape[1]
+        hi_scalars = np.zeros((shap_ho.shape[0], numel))
+        for i,__ in enumerate(lo_scalars.T):    # Iterates through rows
+            hi_scalars[:,i] = np.squeeze(shap_ho@lo_scalars[:,i][:,None])
 
-        if lo_vectors is not None:
-            pass
-        else:
-            hi_vectors = None
+    else:
+        hi_scalars = None
         
-
-        return hi_scalars, hi_vectors
+    if lo_vectors is not None:
+        pass
+    else:
+        hi_vectors = None
+    
+    return hi_scalars, hi_vectors
 

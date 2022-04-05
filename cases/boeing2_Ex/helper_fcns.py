@@ -51,8 +51,8 @@ def forcing_zero(mesh, p):
 def approx_sol_x(mesh, p):
     x1 = mesh['bbox_after_scale']['x'][0]
     x2 = mesh['bbox_after_scale']['x'][1]
-    u1 = 
-    u2 = 
+    u1 = None
+    u2 = None
 
     x = p[:, 0]
     
@@ -63,8 +63,8 @@ def approx_sol_x(mesh, p):
 def approx_sol_y(mesh, p):
     y1 = mesh['bbox_after_scale']['y'][0]
     y2 = mesh['bbox_after_scale']['y'][1]
-    u1 = 
-    u2 = 
+    u1 = None
+    u2 = None
 
     y = p[:, 0]
     
@@ -76,8 +76,8 @@ def approx_sol_y(mesh, p):
 def approx_sol_z(mesh, p):
     z1 = mesh['bbox_after_scale']['z'][0]
     z2 = mesh['bbox_after_scale']['z'][1]
-    u1 = 
-    u2 = 
+    u1 = None
+    u2 = None
 
     z = p[:, 0]
     
@@ -96,17 +96,20 @@ def approx_sol_charge(mesh):
 
     return approx_charge
 
+def reshape_field(mesh, data, case):
+    if case == 'to_array':
+        # Reshape solution from column vector into high order array
+        data_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
+        for ielem, __ in enumerate(mesh['dgnodes']):
+            data_reshaped[:,ielem] = data[mesh['tcg'][ielem,:]]
 
+    elif case == 'to_column':
+        # Reshape back into a column vector from high order array
+        data_reshaped = np.zeros((mesh['pcg'].shape[0]))
+        for ielem, __ in enumerate(mesh['dgnodes']):
+            data_reshaped[mesh['tcg'][ielem,:]] = data[:,ielem]
 
-# a11 = A[0,0]
-# a12 = A[0,1]
-# a13 = A[0,2]
-# a21 = A[1,0]
-# a22 = A[1,1]
-# a23 = A[1,2]
-# a31 = A[2,0]
-# a32 = A[2,1]
-# a33 = A[2,2]
+    return data_reshaped
 
 
 # def approx_sol_charge(p):
