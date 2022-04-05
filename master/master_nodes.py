@@ -40,14 +40,14 @@ def master_nodes(porder, ndim):
             # Make permnodes - the ith corner points going CCW has a 1 in the ith column of pl2d.
             permnodes = []
             for col in plocal.T:
-                permnodes.append(np.where(col == 1)[0][0])
+                permnodes.append(np.where(np.isclose(col,1))[0][0])
             permnodes = np.asarray(permnodes)
 
             # Make permedge
             permedge = []
             for i, col in enumerate(plocal.T):
                 # For each column in pl2d, we need to pull out the points that have zeros in them. For points in the same column, they will lie on the same face.
-                iface_node_idx = np.where(col == 0)[0]
+                iface_node_idx = np.where(np.isclose(col,0))[0]
 
                 # Next we need to check if the points are being indexed CCW. This relies on the fact that for the column/"axis" that is held constant at zero, the column one to the right (can roll over of course) should be decreasing. For ex: on diagonal of triangle, traversing the face nodes CCW means x is decreasing.
                 # So, we sort on the i+1 th column and then reverse it so that it is decreasing.
@@ -131,7 +131,7 @@ def master_nodes(porder, ndim):
             vertex_list = []
             permedge = []
             for i, col in enumerate(plocal.T):
-                vertex_list.append(np.where(col == 1)[0][0])
+                vertex_list.append(np.where(np.isclose(col,1))[0][0])
                 
                 # For each column in pl3d, we need to pull out the points that have zeros in them. For points in the same column, they will lie on the same face.
                 iface_node_idx = np.where(np.isclose(col, 0))[0]

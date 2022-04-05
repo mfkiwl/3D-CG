@@ -85,13 +85,13 @@ def shape2d(porder, plocal, pts):
 
 def shape3d(porder, plocal, pts):
 
-    V3d_nodal, _, _, _ = koornwinder3d(plocal, porder)
+    V3d_nodal, _, _, _ = koornwinder3d(plocal, porder)  # These are the orthogonal basis functions
     np.set_printoptions(suppress=True, linewidth=np.inf, precision=2)
     L = np.linalg.inv(V3d_nodal)
 
     V, Vx, Vy, Vz = koornwinder3d(pts, porder)
 
-    shape_fn_sampled = V @ L
+    shape_fn_sampled = V @ L  # These are the nodal basis functions
     shape_fn_sampled_dx = Vx @ L
     shape_fn_sampled_dy = Vy @ L
     shape_fn_sampled_dz = Vz @ L
