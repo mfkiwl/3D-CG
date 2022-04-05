@@ -80,7 +80,9 @@ def visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=None, vecto
         
     elif visorder == mesh['porder']:
         viz_mesh = create_linear_cg_mesh.create_linear_cg_mesh(mesh)
-        vectors = helper.reshape_field(mesh, vectors, 'to_column', 'vectors')
+
+        if vectors is not None:
+            vectors = helper.reshape_field(mesh, vectors, 'to_column', 'vectors')
     else:
         raise ValueError('Vizorder must be greater than or equal to the mesh order')
 

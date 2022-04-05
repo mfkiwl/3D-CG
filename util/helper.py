@@ -4,15 +4,22 @@ sys.path.append('../../master')
 import shap
 import master_nodes
 
-def reshape_field(mesh, data, case, type):
+def reshape_field(mesh, data, case, type, porder=None):
+    if porder == 1:
+        tcg = mesh['t']
+        nplocal = mesh['t'].shape[1]
+    else:
+        tcg = mesh['tcg']
+        nplocal = mesh['plocal'].shape[0]
+
     if type == 'scalars':
         if case == 'to_array':
             # Reshape solution from column vector into high order array
             num_scalar_fields = data.shape[1]
-            data_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]*num_scalar_fields))
+            data_reshaped = np.zeros((nplocal, mesh['t'].shape[0]*num_scalar_fields))
             for scalar_idx in np.arange(num_scalar_fields):
-                for ielem, __ in enumerate(mesh['dgnodes']):
-                    data_reshaped[:,scalar_idx*num_scalar_fields+ielem] = data[mesh['tcg'][ielem,:], scalar_idx]
+                for ielem, __ in enumerate(mesh['t']):
+                    data_reshaped[:,scalar_idx*num_scalar_fields+ielem] = data[tcg[ielem,:], scalar_idx]
 
         elif case == 'to_column':
             # Reshape back into a column vector from high order array
@@ -21,8 +28,8 @@ def reshape_field(mesh, data, case, type):
 
             data_reshaped = np.zeros((mesh['pcg'].shape[0], num_scalar_fields))
             for scalar_idx in np.arange(num_scalar_fields):
-                for ielem, __ in enumerate(mesh['dgnodes']):
-                    data_reshaped[mesh['tcg'][ielem,:],scalar_idx] = data[:,scalar_idx*num_scalar_fields+ielem]
+                for ielem, __ in enumerate(mesh['t']):
+                    data_reshaped[tcg[ielem,:],scalar_idx] = data[:,scalar_idx*num_scalar_fields+ielem]
 
     elif type == 'vectors':
         if case == 'to_array':

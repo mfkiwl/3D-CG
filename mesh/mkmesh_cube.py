@@ -11,10 +11,11 @@ from assign_BC_flags import assign_BC_flags
 import pickle
 import os.path
 import logging
+import cgmesh
 
 logger = logging.getLogger(__name__)
 
-def mkmesh_cube(porder, ndim, meshfile, build_mesh, scale_factor=1.0, stepfile=None, body_surfs=None):
+def mkmesh_cube(porder, ndim, meshfile, build_mesh, dbc, nbc, scale_factor=1.0, stepfile=None, body_surfs=None):
 
     mesh_save = meshfile + '_processed'
 
@@ -56,6 +57,12 @@ def mkmesh_cube(porder, ndim, meshfile, build_mesh, scale_factor=1.0, stepfile=N
         # create dg nodes
         logger.info('Mesh: creating high order nodes')
         mesh['dgnodes'] = create_dg_nodes(mesh, 3)
+
+        logger.info('Converting high order mesh to CG...')
+        mesh = cgmesh.cgmesh(mesh)
+        
+        mesh['dbc'] = dbc
+        mesh['nbc'] = nbc
 
         # Saving mesh to disk
         with open(mesh_save, 'wb') as file:

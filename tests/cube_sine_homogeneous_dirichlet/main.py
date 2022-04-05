@@ -16,6 +16,7 @@ import calc_derivative
 import os
 import logging
 import logging.config
+import helper
 
 
 def exact_cube(p):
@@ -65,7 +66,7 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     porder = 3
     ndim = 3
     visorder = 6
-    labels = {'scalars': {0: 'Temperature'}, 'vectors': {0: 'Gradient'}}
+    viz_labels = {'scalars': {0: 'Potential'}, 'vectors': {0: 'Potential Gradient'}}
 
     ########## BCs ##########
     # Dirichlet
@@ -115,11 +116,8 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     ########## ERROR CALCULATION ##########
     exact = exact_cube(mesh['pcg'])
     # Reshape into DG high order data structure
-    sol_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
-    exact_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
-    for i in np.arange(mesh['t'].shape[0]):          # Set dirichlet BC
-        sol_reshaped[:, i] = sol[mesh['tcg'][i, :]]
-        exact_reshaped[:, i] = exact[mesh['tcg'][i, :]]
+    sol_reshaped = helper.reshape_field(mesh, sol[:,None], 'to_array', 'scalars')
+    exact_reshaped = helper.reshape_field(mesh, exact[:,None], 'to_array', 'scalars')
 
     error = exact_reshaped.ravel()-sol_reshaped.ravel()
     norm_error = np.linalg.norm(error, np.inf)
@@ -130,6 +128,6 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)[None,:,:]
 
     # ########## VISUALIZE SOLUTION ##########
-    viz.visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad)
+    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad)
 
     return norm_error
