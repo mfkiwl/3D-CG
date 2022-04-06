@@ -13,6 +13,7 @@ import pyamg
 
 logger = logging.getLogger(__name__)
 iter_count = 0
+last_x = 0
 
 def assign_bcs(master, mesh, A, F, approx_sol, issparse=True):
     logger.info('Assigning boundary conditions')
@@ -72,10 +73,11 @@ def call_iter(A_csr, b, tol, x):
         res_norm = np.linalg.norm(residual)
         stopping = tol*np.linalg.norm(b)
         error_factor = res_norm/stopping
-        logger.info('Iteration ' + str(iter_count) + ', current residual norm is {:.5E}, {:.5E} req\'d for stopping, ratio: {:.3f}'.format(res_norm, stopping, error_factor))
+        delta_x = np.linalg.norm(x-last_x)
+        logger.info('Iteration ' + str(iter_count) + ', current residual norm is {:.5E}, {:.5E} req\'d for stopping, ratio: {:.3f}, norm(Delta x)={:.5E}'.format(res_norm, stopping, error_factor, delta_x))
     iter_count += 1
 
-def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildAF=True, solver='amg'):
+def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildAF=True, solver='amg', solver_tol=1e-7):
 
     if mesh['porder'] == 0:
         raise ValueError('porder > 0 required for continuous galerkin')
@@ -140,33 +142,47 @@ def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildA
     A_csr = A.tocsr()
 
     if solver=='cg':
-        print(mesh['porder'])
         # P = lil_matrix((nnodes, nnodes))
         # P.setdiag(1/A.diagonal())   # Diagonal preconditioner
 
-        ml = pyamg.ruge_stuben_solver(A_csr, max_levels=40)    # Multigrid preconditioner
+        ml = pyamg.ruge_stuben_solver(A_csr, max_levels=20)    # Multigrid preconditioner
         P = ml.aspreconditioner()
 
         start = time.perf_counter()
-        tol = 1e-8
-        # res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=1e-8, atol=0)
-        res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=tol, callback=partial(call_iter, A_csr, F, tol), atol=0)
+        res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=solver_tol, callback=partial(call_iter, A_csr, F, solver_tol), atol=0)
         logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
 
         if not res[1]:    # Successful exit
-            uh = res[0]   # This line is for compatibility with the test functions
-            # uh = res[0][:,None]
+            # uh = res[0]   # This line is for compatibility with the test functions
+            uh = res[0][:,None]
+            logger.info('Successfully solved with CG...')
+            logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
+        else:
+            logger.error('CG did not converge, reached ' +str(res[1]) + ' iterations')
+            raise ValueError('CG did not converge, reached ' +str(res[1]) + ' iterations')
+    elif solver=='gmres':
+        # P = lil_matrix((nnodes, nnodes))
+        # P.setdiag(1/A.diagonal())   # Diagonal preconditioner
+
+        ml = pyamg.ruge_stuben_solver(A_csr, max_levels=20)    # Multigrid preconditioner
+        P = ml.aspreconditioner()
+
+        start = time.perf_counter()
+        res = splinalg.gmres(A, F, M=P, x0=approx_sol, tol=solver_tol, callback=partial(call_iter, A_csr, F, solver_tol), atol=0, callback_type='x', restart=20)
+        logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
+
+        if not res[1]:    # Successful exit
+            # uh = res[0]   # This line is for compatibility with the test functions
+            uh = res[0][:,None]
             logger.info('Successfully solved with CG...')
             logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
         else:
             logger.error('CG did not converge, reached ' +str(res[1]) + ' iterations')
             raise ValueError('CG did not converge, reached ' +str(res[1]) + ' iterations')
     elif solver=='amg':
-        ml = pyamg.ruge_stuben_solver(A_csr, max_levels=40)                    # construct the multigrid hierarchy
-        tol=1e-9
+        ml = pyamg.ruge_stuben_solver(A_csr, max_levels=20)                    # construct the multigrid hierarchy
         start = time.perf_counter()
-        uh = ml.solve(F, x0=approx_sol, tol=tol, maxiter=None, callback=partial(call_iter, A_csr, F, tol))                          # solve Ax=b to a tolerance of 1e-8
-        # uh = ml.solve(F, tol=1e-9, maxiter=None)                          # solve Ax=b to a tolerance of 1e-8
+        uh = ml.solve(F, x0=approx_sol, tol=solver_tol, maxiter=None, callback=partial(call_iter, A_csr, F, solver_tol))
         logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
     elif solver == 'direct':
         uh = np.linalg.solve(A.todense(), F)

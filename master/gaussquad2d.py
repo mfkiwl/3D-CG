@@ -29,7 +29,8 @@ def gaussquad2d(pgauss):
 
     if pgauss <= 16:
         import os
-        file = loadmat('../../master/gaussquad_import/gptsweights.mat')
+        file = loadmat('/home/gridsan/saustin/research/3D-CG/master/gaussquad_import/gptsweights.mat')
+        # file = loadmat('../../master/gaussquad_import/gptsweights.mat')
         x = file['gpts2'][pgauss][0]
         w = np.squeeze(file['gweights2'][pgauss][1])
 
@@ -64,7 +65,7 @@ def gaussquad3d(pgauss):
 
     if pgauss <= 15:
         import os
-        file = loadmat('../../master/gaussquad_import/gptsweights.mat')
+        file = loadmat('/home/gridsan/saustin/research/3D-CG/master/gaussquad_import/gptsweights.mat')
         x = file['gpts3'][pgauss][0]
         w = np.squeeze(file['gweights3'][pgauss][1])/6      # Explain this magic number
     else:
