@@ -12,6 +12,7 @@ import logging
 import pyamg
 
 logger = logging.getLogger(__name__)
+iter_count = 0
 
 def assign_bcs(master, mesh, A, F, approx_sol, issparse=True):
     logger.info('Assigning boundary conditions')
@@ -64,13 +65,11 @@ def vissparse(A):
     plt.spy(A)
     plt.show()
 
-count = 0
-def call_iter(__):
-    global count
-    if count %10 == 0:
-        logger.info('Iteration' + str(count))
-        # print(count)
-    count += 1
+def call_iter(x):
+    global iter_count
+    if iter_count %10 == 0:
+        logger.info('Iteration ' + str(iter_count))
+    iter_count += 1
 
 def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildAF=True, solver='amg'):
 
@@ -129,6 +128,10 @@ def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildA
     ########## ASSIGN BCs ##########
     A, F, approx_sol = assign_bcs(master, mesh, A, F, approx_sol, issparse=True)
 
+    with open(outdir+ 'x0.npy', 'wb') as file:
+        np.save(file, approx_sol)
+    logger.info('Saved approximate solution to ' + outdir+ 'x0.npy')
+
     ########## SOLVE ##########
     logger.info('Solving with ' + solver)
 
@@ -139,9 +142,9 @@ def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildA
         ml = pyamg.ruge_stuben_solver(A.tocsr(), max_levels=10)    # Multigrid preconditioner
         P = ml.aspreconditioner()
 
-        # res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=1e-8, callback=call_iter, atol=0)
         start = time.perf_counter()
-        res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=1e-8, atol=0)
+        # res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=1e-8, atol=0)
+        res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=1e-8, callback=call_iter, atol=0)
         logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
 
         if not res[1]:    # Successful exit

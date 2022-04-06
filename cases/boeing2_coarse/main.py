@@ -34,7 +34,7 @@ if not os.path.exists('out/'):
 ########## TOP LEVEL SIM SETUP ##########
 meshfile = 'mesh/' + 'boeing_plane_final_coarse'     # No file extension!
 stepfile = 'mesh/boeing_plane_no_landing_gear.STEP'
-case_select = 'Ex'
+case_select = 'charged_surface'
 porder = 3
 ndim = 3
 solver = 'cg'
@@ -45,15 +45,15 @@ build_mesh = True
 buildAF = True
 use_preconditioning = True
 compute_sol = True
-call_pv = True
+call_pv = False
 vis_filename = outdir+vis_filename
 visorder = 3
-viz_labels = {'scalars': {0: 'Potential'}, 'vectors': {0: 'Potential Gradient'}}
+viz_labels = {'scalars': {0: 'Potential', 1: 'x0'}, 'vectors': {0: 'Potential Gradient'}}
 
 
 fuselage_dia = 3.76     # This is the fuselage of the 737 in m
 stabilizers = [20, 26, 51, 85, 72, 95, 34, 38, 87, 108, 97, 116]
-nose = [39, 78, 33, 48, 99, 118, 84, 106]
+nose = [39, 78, 33, 48, 99, 118, 84, 106, 77, 100, 49, 83]
 fuselage = [107, 117, 122, 130, 131, 134]
 engines = [16, 17, 18, 19, 31, 32, 59, 60, 57, 58, 89, 90]
 wings = [121, 119, 101, 103, 79, 82, 41, 45, 27, 30, 6, 11, 2, 3, 132, 137, 126, 136, 123, 124, 109, 114, 88, 93, 56, 69, 35, 36]
@@ -80,7 +80,8 @@ bdry = (x_minus_face, x_plus_face, y_minus_face, y_plus_face, z_minus_face, z_pl
 nbc = {face:0 for face in bdry}
 
 if case_select == 'charged_surface':
-    dbc = {face:1 for face in surf_faces}.update(nbc)     # Concatenating two dictionaries together
+    dbc = {face:1 for face in surf_faces}
+    dbc.update(nbc)     # Concatenating two dictionaries together
     nbc = {}
 elif case_select == 'Ex':
     dbc = {face:0 for face in surf_faces}
@@ -101,7 +102,6 @@ param = {'kappa': 1, 'c': np.array([0, 0, 0]), 's': 0}
 if compute_sol:
     ########## CREATE MESH ##########
     mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, build_mesh, dbc, nbc, scale_factor, stepfile, body_surfs)
-
     logger.info('Preparing master data structure...')
     master = mkmaster.mkmaster(mesh, ndim=3, pgauss=2*mesh['porder'])
 

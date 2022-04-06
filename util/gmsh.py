@@ -38,7 +38,7 @@ else:
     libdir = os.path.dirname(os.path.dirname(moduledir))
 
 # Hardcode the directory path to the compiled library
-libdir = '/lib/x86_64-linux-gnu'
+libdir = '/home/gridsan/saustin/.local/lib'
 libpath = os.path.join(libdir, libname)
 
 if not os.path.exists(libpath):
