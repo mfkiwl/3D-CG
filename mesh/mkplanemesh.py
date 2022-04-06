@@ -9,7 +9,7 @@ from setbndnbrs import setbndnbrs
 sys.path.insert(0, '../util')
 sys.path.insert(0, '../master')
 from import_util import process_mesh
-from master_nodes import master_nodes
+from masternodes import masternodes
 from assign_BC_flags import assign_BC_flags
 import pickle
 import os.path
@@ -38,7 +38,7 @@ def mkmesh_plane(porder, ndim, meshfile):
     mesh['f'], mesh['t2f'] = mkt2f_new(mesh['t'], 3)
 
     logging.info('/Mesh: master nodes')
-    mesh['plocal'], mesh['tlocal'], _, _, _, _, _ = master_nodes(porder, 3)
+    mesh['plocal'], mesh['tlocal'], _, _, _, _, _ = masternodes(porder, 3)
 
     # set boundary numbers
     logging.info('/Mesh: assigning BC flags')

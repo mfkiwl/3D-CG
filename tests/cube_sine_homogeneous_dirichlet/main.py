@@ -63,9 +63,8 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     build_mesh = True
     buildAF = True
     vis_filename = outdir+vis_filename
-    porder = 3
     ndim = 3
-    visorder = 6
+    visorder = porder
     viz_labels = {'scalars': {0: 'Potential'}, 'vectors': {0: 'Potential Gradient'}}
 
     ########## BCs ##########

@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0, '../../util')
 sys.path.insert(0, '../../mesh')
 sys.path.insert(0, '../../master')
-import master_nodes
+import masternodes
 import create_dg_nodes
 import cgmesh
 import helper
@@ -59,7 +59,7 @@ def visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=None, vecto
         ho_viz_mesh['t'] = mesh['t']
         ho_viz_mesh['porder'] = visorder    # This is the one change from the base mesh
 
-        ho_viz_mesh['plocal'], ho_viz_mesh['tlocal'], __, __, __, __, __ = master_nodes.master_nodes(ho_viz_mesh['porder'], mesh['ndim'])
+        ho_viz_mesh['plocal'], ho_viz_mesh['tlocal'], __, __, __, __, __ = masternodes.masternodes(ho_viz_mesh['porder'], mesh['ndim'])
     
         ho_viz_mesh['dgnodes'] = create_dg_nodes.create_dg_nodes(ho_viz_mesh, mesh['ndim'])
 
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     mesh['t'] = mesh['t']
     mesh['porder'] = mesh['porder']*2
 
-    mesh['plocal'], mesh['tlocal'], __, __, __, __, __ = master_nodes.master_nodes(mesh['porder'], 3)
+    mesh['plocal'], mesh['tlocal'], __, __, __, __, __ = masternodes.masternodes(mesh['porder'], 3)
   
     mesh['dgnodes'] = create_dg_nodes.create_dg_nodes(mesh, 3)
 

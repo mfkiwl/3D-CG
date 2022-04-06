@@ -30,26 +30,27 @@ if not os.path.exists('out/'):
     os.makedirs('out/')
     logger.info('out/ directory not present, created...')
 
-
 ########## TOP LEVEL SIM SETUP ##########
 meshfile = 'mesh/' + 'boeing_plane_final_coarse'     # No file extension!
 stepfile = 'mesh/boeing_plane_no_landing_gear.STEP'
+
 case_select = 'charged_surface'
-porder = 3
+umin = None     # Fill these in with the max and min values of the potential when computing the external E field solutions
+umax = None
+
+porder = 2
 ndim = 3
 solver = 'cg'
 
 outdir = 'out/'
-vis_filename = 'boeing_plane_Ex_coarse'
+vis_filename = 'boeing_plane_surf_charge_coarse'
 build_mesh = True
 buildAF = True
-use_preconditioning = True
 compute_sol = True
 call_pv = False
 vis_filename = outdir+vis_filename
 visorder = 3
 viz_labels = {'scalars': {0: 'Potential', 1: 'x0'}, 'vectors': {0: 'Potential Gradient'}}
-
 
 fuselage_dia = 3.76     # This is the fuselage of the 737 in m
 stabilizers = [20, 26, 51, 85, 72, 95, 34, 38, 87, 108, 97, 116]
@@ -58,7 +59,6 @@ fuselage = [107, 117, 122, 130, 131, 134]
 engines = [16, 17, 18, 19, 31, 32, 59, 60, 57, 58, 89, 90]
 wings = [121, 119, 101, 103, 79, 82, 41, 45, 27, 30, 6, 11, 2, 3, 132, 137, 126, 136, 123, 124, 109, 114, 88, 93, 56, 69, 35, 36]
 body_surfs = stabilizers + nose + fuselage + engines + wings
-# body_surfs = fuselage
 
 ########## GEOMETRY SETUP ##########
 pt_1_fuselage = np.array([8547.42, 1505.00, 5678.37])
@@ -102,22 +102,29 @@ param = {'kappa': 1, 'c': np.array([0, 0, 0]), 's': 0}
 if compute_sol:
     ########## CREATE MESH ##########
     mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, build_mesh, dbc, nbc, scale_factor, stepfile, body_surfs)
+    mesh['dbc'] = dbc
+    mesh['nbc'] = nbc
+
     logger.info('Preparing master data structure...')
     master = mkmaster.mkmaster(mesh, ndim=3, pgauss=2*mesh['porder'])
 
     # ########## CALCULATE APPROX SOLUTION ##########
     logger.info('Computing approximate solution')
-    approx_charge = domain_helper_fcns.approx_sol_charge(mesh)
+
+    if case_select == 'charged_surface':
+        approx_sol = domain_helper_fcns.approx_sol_charge(mesh)
+    else:
+        approx_sol = domain_helper_fcns.approx_sol_E_field(mesh, case_select, umin, umax)
 
     with open('approx_charge_vec.npy', 'wb') as file:
-        np.save(file, approx_charge)
+        np.save(file, approx_sol)
 
     logger.info('Visualizing approx solution...')
-    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=approx_charge)
+    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=approx_sol)
 
     ########## SOLVE ##########
-
-    sol, x0 = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_zero, param, ndim, outdir, np.squeeze(approx_charge), buildAF, solver)
+    
+    sol, x0 = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_zero, param, ndim, outdir, np.squeeze(approx_sol), buildAF, solver)
 
     ########## SAVE DATA ##########
 

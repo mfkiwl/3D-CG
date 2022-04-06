@@ -6,7 +6,7 @@ from create_dg_nodes import create_dg_nodes
 sys.path.insert(0, '../util')
 sys.path.insert(0, '../master')
 from import_util import process_mesh
-from master_nodes import master_nodes
+from masternodes import masternodes
 from assign_BC_flags import assign_BC_flags
 import pickle
 import os.path
@@ -15,7 +15,7 @@ import cgmesh
 
 logger = logging.getLogger(__name__)
 
-def mkmesh_cube(porder, ndim, meshfile, build_mesh, dbc, nbc, scale_factor=1.0, stepfile=None, body_surfs=None):
+def mkmesh_cube(porder, ndim, meshfile, build_mesh, scale_factor=1.0, stepfile=None, body_surfs=None):
 
     mesh_save = meshfile + '_processed'
 
@@ -48,7 +48,7 @@ def mkmesh_cube(porder, ndim, meshfile, build_mesh, dbc, nbc, scale_factor=1.0, 
         mesh['f'], mesh['t2f'] = mkt2f_new(mesh['t'], 3)
 
         logger.info('Mesh: master nodes')
-        mesh['plocal'], mesh['tlocal'], _, _, _, _, _ = master_nodes(porder, 3)
+        mesh['plocal'], mesh['tlocal'], _, _, _, _, _ = masternodes(porder, 3)
 
         # set boundary numbers
         logger.info('Mesh: assigning BC flags')
@@ -61,9 +61,6 @@ def mkmesh_cube(porder, ndim, meshfile, build_mesh, dbc, nbc, scale_factor=1.0, 
         logger.info('Converting high order mesh to CG...')
         mesh = cgmesh.cgmesh(mesh)
         
-        mesh['dbc'] = dbc
-        mesh['nbc'] = nbc
-
         # Saving mesh to disk
         with open(mesh_save, 'wb') as file:
             pickle.dump(mesh, file)

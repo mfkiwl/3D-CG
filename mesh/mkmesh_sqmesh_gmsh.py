@@ -7,7 +7,7 @@ from setbndnbrs import setbndnbrs
 sys.path.insert(0, '../util')
 sys.path.insert(0, '../master')
 from import_util import process_mesh, load_processed_mesh
-from master_nodes import master_nodes
+from masternodes import masternodes
 from assign_BC_flags import assign_BC_flags
 
 
@@ -21,7 +21,7 @@ def mkmesh_square(porder, ndim, meshfile):
 
     mesh['f'], mesh['t2f'] = mkt2f(mesh['t'], 2)
     
-    mesh['plocal'], mesh['tlocal'], _, _, _, _ = master_nodes(porder, 2)
+    mesh['plocal'], mesh['tlocal'], _, _, _, _ = masternodes(porder, 2)
 
     # set boundary numbers
     mesh = assign_BC_flags(mesh)

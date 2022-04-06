@@ -2,7 +2,7 @@ import numpy as np
 import sys
 sys.path.append('../../master')
 import shap
-import master_nodes
+import masternodes
 
 def reshape_field(mesh, data, case, type, porder=None):
     if porder == 1:
@@ -54,8 +54,8 @@ def interpolate_high_order(porder_lo, porder_hi, ndim, lo_scalars=None, lo_vecto
 
     # Get ho pts to evaluate at - this is plocal for the high order
     # # Low order shape functions sampled at the high order nodal pts - this will be a tall matrix when it is usually square (when setting up the shape functions)
-    ploc_lo, __, _, _, _, _, _ = master_nodes.master_nodes(porder_lo, ndim)
-    ploc_hi, __, _, _, _, _, _ = master_nodes.master_nodes(porder_hi, ndim)
+    ploc_lo, __, _, _, _, _, _ = masternodes.masternodes(porder_lo, ndim)
+    ploc_hi, __, _, _, _, _, _ = masternodes.masternodes(porder_hi, ndim)
 
     # Low order shape functions sampled at the high order nodal pts - this will be a tall matrix when it is usually square (when setting up the shape functions)
     if ndim == 3:

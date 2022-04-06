@@ -6,7 +6,7 @@ sys.path.append('../../viz')
 sys.path.append('../../CG')
 import numpy as np
 from import_util import load_mat
-import viz_driver
+# import viz_driver
 from cgmesh import cgmesh
 import mkmesh_cube
 import mkmaster
@@ -122,10 +122,10 @@ def test_3d_cube_linear_neumann(porder, meshfile, solver):
 
     ########## CALC DERIVATIVES ##########
 
-    logger.info('Calculating derivatives')
-    grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
-    result = np.concatenate((sol_reshaped[:,None,:], grad.transpose(1,2,0)), axis=1)
+    # logger.info('Calculating derivatives')
+    # grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
+    # result = np.concatenate((sol_reshaped[:,None,:], grad.transpose(1,2,0)), axis=1)
 
-    # ########## VISUALIZE SOLUTION ##########
-    viz_driver.viz_driver(mesh, master, result, vis_filename, call_pv)
+    # # ########## VISUALIZE SOLUTION ##########
+    # viz_driver.viz_driver(mesh, master, result, vis_filename, call_pv)
     return norm_error

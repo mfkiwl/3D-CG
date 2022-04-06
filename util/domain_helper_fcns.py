@@ -43,51 +43,6 @@ def batch_distance_to_body_gmsh(stepfile, pts, surfaces, sf):
 
     return min_distances
 
-def linear_fcn(x1, x2, u1, u2, x):
-    m = (u2-u1)/(x2-x1)
-    return m*(x-x1)+u1
-
-def forcing_zero(p):
-    return np.zeros((p.shape[0], 1))
-
-def approx_sol_x(mesh, p):
-    x1 = mesh['bbox_after_scale']['x'][0]
-    x2 = mesh['bbox_after_scale']['x'][1]
-    u1 = None
-    u2 = None
-
-    x = p[:, 0]
-    
-    u_approx = linear_fcn(x1, x2, u1, u2, x)
-
-    return u_approx
-
-def approx_sol_y(mesh, p):
-    y1 = mesh['bbox_after_scale']['y'][0]
-    y2 = mesh['bbox_after_scale']['y'][1]
-    u1 = None
-    u2 = None
-
-    y = p[:, 0]
-    
-    u_approx = linear_fcn(y1, y2, u1, u2, y)
-
-    return u_approx
-
-
-def approx_sol_z(mesh, p):
-    z1 = mesh['bbox_after_scale']['z'][0]
-    z2 = mesh['bbox_after_scale']['z'][1]
-    u1 = None
-    u2 = None
-
-    z = p[:, 0]
-    
-    u_approx = linear_fcn(z1, z2, u1, u2, z)
-
-    return u_approx
-
-
 def approx_sol_charge(mesh):
     surfaces = np.asarray(mesh['body_surfs']) # Fill this out
 
@@ -102,9 +57,69 @@ def approx_sol_charge(mesh):
 
     return approx_charge
 
+def linear_fcn(x1, x2, u1, u2, x):
+    m = (u2-u1)/(x2-x1)
+    return m*(x-x1)+u1
+
+def approx_sol_E_field(mesh, case, u1, u2):
+    if (u1 is None) or (u2 is None):
+        raise ValueError('u1 and u2 cannot be None')
+    if case == 'Ex':
+        x1 = mesh['bbox_after_scale']['x'][0]
+        x2 = mesh['bbox_after_scale']['x'][1]
+        p = mesh['pcg'][:, 0]
+    elif case == 'Ey':
+        x1 = mesh['bbox_after_scale']['y'][0]
+        x2 = mesh['bbox_after_scale']['y'][1]
+        p = mesh['pcg'][:, 1]
+    elif case == 'Ez':
+        x1 = mesh['bbox_after_scale']['z'][0]
+        x2 = mesh['bbox_after_scale']['z'][1]
+        p = mesh['pcg'][:, 2]
+
+    return linear_fcn(x1, x2, u1, u2, p)[:,None]
+
+def forcing_zero(p):
+    return np.zeros((p.shape[0], 1))
+
+# def approx_sol_x(mesh):
+#     x1 = mesh['bbox_after_scale']['x'][0]
+#     x2 = mesh['bbox_after_scale']['x'][1]
+#     u1 = None
+#     u2 = None
+
+#     x = mesh['pcg'][:, 0]
+    
+#     u_approx = linear_fcn(x1, x2, u1, u2, x)
+
+#     return u_approx
+
+# def approx_sol_y(mesh, p):
+#     y1 = mesh['bbox_after_scale']['y'][0]
+#     y2 = mesh['bbox_after_scale']['y'][1]
+#     u1 = None
+#     u2 = None
+
+#     y = p[:, 0]
+    
+#     u_approx = linear_fcn(y1, y2, u1, u2, y)
+
+#     return u_approx
+
+# def approx_sol_z(mesh, p):
+#     z1 = mesh['bbox_after_scale']['z'][0]
+#     z2 = mesh['bbox_after_scale']['z'][1]
+#     u1 = None
+#     u2 = None
+
+#     z = p[:, 0]
+    
+#     u_approx = linear_fcn(z1, z2, u1, u2, z)
+
+#     return u_approx
+
 if __name__ == '__main__':
     with open('./mesh/boeing_', 'rb') as file:
         mesh = pickle.load(file)
-
 
     gmsh.fltk.run()

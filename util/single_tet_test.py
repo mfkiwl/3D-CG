@@ -11,7 +11,7 @@ mesh['p'] = np.array([[0, 1, 0],
                        [0, 0, 1]])
 
 mesh['t'] = np.array([0, 1, 2, 3])[None,:]
-mesh['plocal'], mesh['tlocal'], _, _, _, _, _ = master_nodes.master_nodes(mesh['porder'], 3)
+mesh['plocal'], mesh['tlocal'], _, _, _, _, _ = masternodes.masternodes(mesh['porder'], 3)
 mesh['dgnodes'] = create_dg_nodes.create_dg_nodes(mesh, 3)
 mesh = cgmesh.cgmesh(mesh)
 

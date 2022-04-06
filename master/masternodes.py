@@ -2,7 +2,7 @@ import numpy as np
 
 # TODO: extend to account for elements with curved faces and a different porder on the faces (morder)
 
-def master_nodes(porder, ndim):
+def masternodes(porder, ndim):
 
     if ndim == 2:
         if porder == 0:
@@ -126,7 +126,7 @@ def master_nodes(porder, ndim):
 
             tlocal = np.asarray(tloclist)
 
-            plocface, tlocface,_,_,_,_ = master_nodes(porder, ndim-1)
+            plocface, tlocface,_,_,_,_ = masternodes(porder, ndim-1)
 
             vertex_list = []
             permedge = []
