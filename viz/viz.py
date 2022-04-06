@@ -73,8 +73,10 @@ def visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=None, vecto
         scalars, vectors = helper.interpolate_high_order(mesh['porder'], ho_viz_mesh['porder'], mesh['ndim'], lo_scalars=scalars, lo_vectors=vectors)
 
         # Reshape back into the column vector of high order
-        scalars = helper.reshape_field(ho_viz_mesh, scalars, 'to_column', 'scalars')
-        vectors = helper.reshape_field(ho_viz_mesh, vectors, 'to_column', 'vectors')
+        if scalars is not None:
+            scalars = helper.reshape_field(ho_viz_mesh, scalars, 'to_column', 'scalars')
+        if vectors is not None:
+            vectors = helper.reshape_field(ho_viz_mesh, vectors, 'to_column', 'vectors')
 
         viz_mesh = create_linear_cg_mesh.create_linear_cg_mesh(ho_viz_mesh)    # update
         

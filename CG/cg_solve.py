@@ -68,12 +68,13 @@ def vissparse(A):
 
 def call_iter(A_csr, b, tol, x):
     global iter_count
-    if iter_count %10 == 0:
+    if iter_count %1 == 0:
         residual = A_csr@x[:,None] - b
         res_norm = np.linalg.norm(residual)
         stopping = tol*np.linalg.norm(b)
         error_factor = res_norm/stopping
         delta_x = np.linalg.norm(x-last_x)
+        last_x = x
         logger.info('Iteration ' + str(iter_count) + ', current residual norm is {:.5E}, {:.5E} req\'d for stopping, ratio: {:.3f}, norm(Delta x)={:.5E}'.format(res_norm, stopping, error_factor, delta_x))
     iter_count += 1
 

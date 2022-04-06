@@ -144,12 +144,12 @@ if compute_sol:
         else:
             approx_sol = domain_helper_fcns.approx_sol_E_field(mesh, case_select, umin, umax)
 
-        with open('approx_charge_vec.npy', 'wb') as file:
+        with open(outdir+'approx_charge_vec.npy', 'wb') as file:
             np.save(file, approx_sol)
 
     else:
         logger.info('Loading approximate solution from file')
-        with open('approx_charge_vec.npy', 'rb') as file:
+        with open(outdir+'approx_charge_vec.npy', 'rb') as file:
             approx_sol = np.load(file)
 
     logger.info('Visualizing approx solution...')
