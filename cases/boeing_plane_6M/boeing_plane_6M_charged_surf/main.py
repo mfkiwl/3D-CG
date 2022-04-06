@@ -99,6 +99,30 @@ elif case_select == 'Ez':
 ########## PHYSICS PARAM ##########
 param = {'kappa': 1, 'c': np.array([0, 0, 0]), 's': 0}
 
+########## LOGGING SIM PARAMETERS ##########
+logger.info('Case type: '+case_select)
+logger.info('Dim: '+str(ndim))
+logger.info('porder: '+str(porder))
+logger.info('Solver: ' + solver)
+logger.info('Mesh scale factor: ' + str(scale_factor))
+logger.info('Dirichlet BCs: ' + str(dbc))
+logger.info('Neumann BCs: ' + str(nbc))
+logger.info('Physics parameters: ' + str(param))
+logger.info('Viz filename: ' + vis_filename)
+logger.info('Build mesh y/n: ' +str(build_mesh))
+logger.info('Construct A and F y/n: ' +str(buildAF))
+logger.info('Compute solution y/n: ' +str(compute_sol))
+logger.info('Call paraview when done y/n: ' +str(call_pv))
+logger.info('Visualization porder: ' + str(visorder))
+logger.info('Visualization filename: ' + vis_filename + '.vtu')
+logger.info('Visualization labels: ' + str(viz_labels))
+logger.info('Mesh file: '+meshfile)
+
+if umin is not None:
+    logger.info('Umin for approx solution: '+ str(umin))
+if umax is not None:
+    logger.info('Umax for approx solution: '+ str(umax))
+
 if compute_sol:
     ########## CREATE MESH ##########
     mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, build_mesh, dbc, nbc, scale_factor, stepfile, body_surfs)
