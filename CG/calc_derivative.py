@@ -12,9 +12,6 @@ def calc_derivatives(mesh, master, sol, ndim):
     result = pool.map(partial(gradcalc2.grad_calc, mesh['dgnodes'], master, sol), np.arange(nelem))
     # result = np.asarray(list(map(partial(grad_calc, mesh['dgnodes'], master, sol), np.arange(nelem))))
     grad = np.hstack(result)
-    # print(grad.shape)
-    # exit()
     # mag = np.linalg.norm(grad, ord=2, axis=2)[:,:,None]
 
-    # return np.concatenate((grad, mag), axis=2)
     return grad

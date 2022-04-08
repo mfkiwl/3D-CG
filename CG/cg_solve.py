@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 iter_count = 0
 last_x = 0
 
-def assign_bcs(master, mesh, A, F, approx_sol, issparse=True):
+def assign_bcs(master, mesh, A, F, issparse=True):
     logger.info('Assigning boundary conditions')
     bdry_faces_start_idx = np.where(mesh['f'][:, -1] < 0)[0][0]
 
@@ -50,8 +50,6 @@ def assign_bcs(master, mesh, A, F, approx_sol, issparse=True):
                 A[face_nodes, face_nodes] = 1
 
             F[face_nodes, 0] = mesh['dbc'][physical_group]
-            if approx_sol is not None:
-                approx_sol[face_nodes] = mesh['dbc'][physical_group]
 
         elif physical_group in mesh['nbc'].keys():        # Neumann BC
             pts_on_face = mesh['dgnodes'][bdry_elem, loc_face_nodes, :]
@@ -60,7 +58,7 @@ def assign_bcs(master, mesh, A, F, approx_sol, issparse=True):
         else:
             raise ValueError('Unknown physical group')
 
-    return A, F, approx_sol
+    return A, F
 
 def vissparse(A):
     plt.spy(A)
@@ -68,17 +66,18 @@ def vissparse(A):
 
 def call_iter(A_csr, b, tol, x):
     global iter_count
+    global last_x
     if iter_count %1 == 0:
         residual = A_csr@x[:,None] - b
         res_norm = np.linalg.norm(residual)
         stopping = tol*np.linalg.norm(b)
         error_factor = res_norm/stopping
         delta_x = np.linalg.norm(x-last_x)
-        last_x = x
         logger.info('Iteration ' + str(iter_count) + ', current residual norm is {:.5E}, {:.5E} req\'d for stopping, ratio: {:.3f}, norm(Delta x)={:.5E}'.format(res_norm, stopping, error_factor, delta_x))
     iter_count += 1
+    last_x = x
 
-def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildAF=True, solver='amg', solver_tol=1e-7):
+def cg_solve(master, mesh, forcing, param, ndim, outdir, buildAF=True, solver='amg', solver_tol=1e-7):
 
     if mesh['porder'] == 0:
         raise ValueError('porder > 0 required for continuous galerkin')
@@ -115,42 +114,40 @@ def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildA
                 logger.info(str(i)+'/'+str(ae.shape[0]))
             A[elem[:, None], elem] += ae[i, :, :]
             F[elem, 0] += fe[:, i]
+
         logger.info('Loading matrix took '+ str(time.perf_counter()-start)+' s')
-        logger.info('Saving F...')
-        with open(outdir+ 'F_preBCs.npy', 'wb') as file:
+
+        ########## ASSIGN BCs ##########
+        A, F = assign_bcs(master, mesh, A, F, issparse=True)
+
+        logger.info('Saving F post BCs...')
+        with open(outdir+ 'F_postBCs.npy', 'wb') as file:
             np.save(file, F)
 
-        logger.info('Saving A...')
-        save_npz(outdir + 'A_preBCs.npz', A.asformat('csr'))
-        logger.info('Saved A and F to disk, pre BCs')
+        logger.info('Saving A post BCs...')
+        save_npz(outdir + 'A_postBCs.npz', A.asformat('csr'))
+        
+        logger.info('Done saving A, F')
 
     else:
         # Read from disk
         logger.info('Reading A and F from disk')
-        with open(outdir + 'F_preBCs.npy', 'rb') as file:
+        with open(outdir + 'F_postBCs.npy', 'rb') as file:
             F = np.load(file)
-        A = load_npz(outdir + 'A_preBCs.npz').asformat('lil')
-
-    ########## ASSIGN BCs ##########
-    A, F, approx_sol = assign_bcs(master, mesh, A, F, approx_sol, issparse=True)
-
-    with open(outdir+ 'x0.npy', 'wb') as file:
-        np.save(file, approx_sol)
-    logger.info('Saved approximate solution to ' + outdir+ 'x0.npy')
+        A = load_npz(outdir + 'A_postBCs.npz').asformat('lil')
 
     ########## SOLVE ##########
     logger.info('Solving with ' + solver)
     A_csr = A.tocsr()
 
-    if solver=='cg':
-        # P = lil_matrix((nnodes, nnodes))
-        # P.setdiag(1/A.diagonal())   # Diagonal preconditioner
+    logger.info('Prior to solving: Residual norm is {:.5E}'.format(np.linalg.norm(np.linalg.norm(F))))
 
+    if solver=='cg':
         ml = pyamg.ruge_stuben_solver(A_csr, max_levels=20)    # Multigrid preconditioner
         P = ml.aspreconditioner()
 
         start = time.perf_counter()
-        res = splinalg.cg(A, F, M=P, x0=approx_sol, tol=solver_tol, callback=partial(call_iter, A_csr, F, solver_tol), atol=0)
+        res = splinalg.cg(A, F, M=P, x0=None, tol=solver_tol, callback=partial(call_iter, A_csr, F, solver_tol), atol=0)
         logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
 
         if not res[1]:    # Successful exit
@@ -162,30 +159,27 @@ def cg_solve(master, mesh, forcing, param, ndim, outdir, approx_sol=None, buildA
             logger.error('CG did not converge, reached ' +str(res[1]) + ' iterations')
             raise ValueError('CG did not converge, reached ' +str(res[1]) + ' iterations')
     elif solver=='gmres':
-        # P = lil_matrix((nnodes, nnodes))
-        # P.setdiag(1/A.diagonal())   # Diagonal preconditioner
-
         ml = pyamg.ruge_stuben_solver(A_csr, max_levels=20)    # Multigrid preconditioner
         P = ml.aspreconditioner()
 
         start = time.perf_counter()
-        res = splinalg.gmres(A, F, M=P, x0=approx_sol, tol=solver_tol, callback=partial(call_iter, A_csr, F, solver_tol), atol=0, callback_type='x', restart=20)
+        res = splinalg.gmres(A, F, M=P, x0=None, tol=solver_tol, callback=partial(call_iter, A_csr, F, solver_tol), atol=0, callback_type='x', restart=20)
         logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
 
         if not res[1]:    # Successful exit
-            # uh = res[0]   # This line is for compatibility with the test functions
+            # uh = res[0]
             uh = res[0][:,None]
-            logger.info('Successfully solved with CG...')
+            logger.info('Successfully solved with GMRES...')
             logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
         else:
-            logger.error('CG did not converge, reached ' +str(res[1]) + ' iterations')
-            raise ValueError('CG did not converge, reached ' +str(res[1]) + ' iterations')
+            logger.error('GMRES did not converge, reached ' +str(res[1]) + ' iterations')
+            raise ValueError('GMRES did not converge, reached ' +str(res[1]) + ' iterations')
     elif solver=='amg':
         ml = pyamg.ruge_stuben_solver(A_csr, max_levels=20)                    # construct the multigrid hierarchy
         start = time.perf_counter()
-        uh = ml.solve(F, x0=approx_sol, tol=solver_tol, maxiter=None, callback=partial(call_iter, A_csr, F, solver_tol))
+        uh = ml.solve(F, x0=None, tol=solver_tol, maxiter=None, callback=partial(call_iter, A_csr, F, solver_tol))
         logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
     elif solver == 'direct':
         uh = np.linalg.solve(A.todense(), F)
 
-    return uh, approx_sol
+    return uh

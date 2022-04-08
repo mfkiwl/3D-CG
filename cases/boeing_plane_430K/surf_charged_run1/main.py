@@ -31,7 +31,7 @@ try:
         logger.info('out/ directory not present, created...')
 
     ########## TOP LEVEL SIM SETUP ##########
-    meshfile = 'mesh/' + 'boeing_plane_final'     # No file extension!
+    meshfile = 'mesh/' + 'boeing_plane_final_coarse'     # No file extension!
     stepfile = 'mesh/boeing_plane_no_landing_gear.STEP'
 
     case_select = 'charged_surface'
@@ -40,11 +40,11 @@ try:
 
     porder = 2
     ndim = 3
-    solver = 'gmres'
-    solver_tol = 1e-7
+    solver = 'cg'
+    solver_tol = 1e-5
 
     outdir = 'out/'
-    vis_filename = 'boeing_plane_surf_charge'
+    vis_filename = 'boeing_plane_surf_charge_coarse'
     build_mesh = False
     buildAF = False
     compute_sol = False
@@ -193,7 +193,6 @@ try:
     # scalars = np.concatenate((sol[:,None], x0[:,None]), axis=1)
     sol_reshaped = helper.reshape_field(mesh, sol, 'to_array', 'scalars')
     scalars = np.concatenate((sol, x0[:,None]), axis=1)
-
 
     grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)[None,:,:]
 

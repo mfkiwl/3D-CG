@@ -31,23 +31,23 @@ try:
         logger.info('out/ directory not present, created...')
 
     ########## TOP LEVEL SIM SETUP ##########
-    meshfile = 'mesh/' + 'boeing_plane_final'     # No file extension!
+    meshfile = 'mesh/' + 'boeing_plane_final_coarse'     # No file extension!
     stepfile = 'mesh/boeing_plane_no_landing_gear.STEP'
 
-    case_select = 'charged_surface'
+    case_select = 'Ey'
     umin = None     # Fill these in with the max and min values of the potential when computing the external E field solutions
     umax = None
 
     porder = 2
     ndim = 3
-    solver = 'gmres'
-    solver_tol = 1e-7
+    solver = 'cg'
+    solver_tol = 1e-5
 
     outdir = 'out/'
-    vis_filename = 'boeing_plane_surf_charge'
+    vis_filename = 'boeing_plane_'+case_select
     build_mesh = False
     buildAF = False
-    compute_sol = False
+    compute_sol = True
     call_pv = False
     vis_filename = outdir+vis_filename
     visorder = porder
@@ -142,22 +142,26 @@ try:
             if case_select == 'charged_surface':
                 approx_sol = domain_helper_fcns.approx_sol_charge(mesh)
             else:
-                approx_sol = domain_helper_fcns.approx_sol_E_field(mesh, case_select, umin, umax)
+                # approx_sol = domain_helper_fcns.approx_sol_E_field(mesh, case_select, umin, umax)
+                approx_sol = None
 
-            with open(outdir+'approx_charge_vec.npy', 'wb') as file:
+            with open(outdir+'approx_sol.npy', 'wb') as file:
                 np.save(file, approx_sol)
 
         else:
-            logger.info('Loading approximate solution from file')
-            with open(outdir+'approx_charge_vec.npy', 'rb') as file:
-                approx_sol = np.load(file)
-
-        #logger.info('Visualizing approx solution...')
-        #viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=approx_sol)
+            if case_select == 'charged_surface':
+                logger.info('Loading approximate solution from file')
+                with open(outdir+'approx_sol.npy', 'rb') as file:
+                    approx_sol = np.load(file)
+            else:
+                approx_sol = None
 
         ########## SOLVE ##########
         
-        sol, x0 = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_zero, param, ndim, outdir, np.squeeze(approx_sol), buildAF, solver, solver_tol)
+        if approx_sol is not None:
+            sol, x0 = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_zero, param, ndim, outdir, np.squeeze(approx_sol), buildAF, solver, solver_tol)
+        else:
+            sol, x0 = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_zero, param, ndim, outdir, None, buildAF, solver, solver_tol)
 
         ########## SAVE DATA ##########
 
@@ -194,11 +198,11 @@ try:
     sol_reshaped = helper.reshape_field(mesh, sol, 'to_array', 'scalars')
     scalars = np.concatenate((sol, x0[:,None]), axis=1)
 
-
     grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)[None,:,:]
 
-    # ########## VISUALIZE SOLUTION ##########
+    ########## VISUALIZE SOLUTION ##########
+
+    logger.info('Generating .VTU file of solution...')
     viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=scalars, vectors=grad)
 except Exception as e:
-    logger.info(e.message)
-    logger.info(str(e.args))
+    logger.exception('message')

@@ -6,7 +6,6 @@ from shap import shape3d
 import logging
 from math_helper_fcns import inv
 
-
 logger = logging.getLogger(__name__)
 
 def grad_calc(dgnodes, master, sol, idx):
