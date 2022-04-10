@@ -24,3 +24,13 @@ CG/uh2d.mat
 !/tests/data/*.msh
 /tests/amg_test/
 *mesh_save
+6M_Ex_out/
+6M_Ey_out/
+6M_Ez_out/
+6M_Phi_out/
+430K_Ex_out/
+430K_Ey_out/
+430K_Ez_out/
+430K_Phi_out/
+falconfine.mat
+*MACOSX*
