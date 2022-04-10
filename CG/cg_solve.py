@@ -1,6 +1,6 @@
 import numpy as np
 import elemmat_cg
-from elemforcing_cg import elemforcing_cg
+import quadrature
 from scipy.sparse import lil_matrix, save_npz, load_npz
 import scipy.sparse.linalg as splinalg
 import matplotlib.pyplot as plt
@@ -53,7 +53,7 @@ def assign_bcs(master, mesh, A, F, issparse=True):
 
         elif physical_group in mesh['nbc'].keys():        # Neumann BC
             pts_on_face = mesh['dgnodes'][bdry_elem, loc_face_nodes, :]
-            Ff = elemforcing_cg(pts_on_face, master, mesh['nbc'][physical_group], 3)
+            Ff = quadrature.elem_surface_integral(pts_on_face, master, np.ones((pts_on_face.shape[0],1))*mesh['nbc'][physical_group], 3)
             F[face_nodes, 0] += Ff
         else:
             raise ValueError('Unknown physical group')

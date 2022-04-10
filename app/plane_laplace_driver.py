@@ -190,6 +190,6 @@ try:
     ########## VISUALIZE SOLUTION ##########
 
     logger.info('Generating .VTU file of solution...')
-    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=scalars, vectors=grad[None,:,:])
+    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad[None,:,:])
 except Exception as e:
     logger.exception()

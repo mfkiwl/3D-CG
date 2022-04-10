@@ -6,7 +6,7 @@ sys.path.append('../../viz')
 sys.path.append('../../CG')
 import numpy as np
 from import_util import load_mat
-import viz_driver
+# import viz_driver
 from cgmesh import cgmesh
 import mkmesh_cube
 import mkmaster
@@ -31,7 +31,7 @@ def forcing_zero(p):
 def test_3d_cube_linear_dirichlet(porder, meshfile, solver):
 
     ########## INITIALIZE LOGGING ##########
-    logging.config.fileConfig('../../logging/logging.conf', disable_existing_loggers=False)
+    logging.config.fileConfig('../../logging/loggingDEPRECATED.conf', disable_existing_loggers=False)
     # root logger, no __name__ as in submodules further down the hierarchy - this is very important - cost me a lot of time when I passed __name__ to the main logger
     logger = logging.getLogger('root')
     logger.info('*************************** INITIALIZING SIM ***************************')
@@ -93,7 +93,7 @@ def test_3d_cube_linear_dirichlet(porder, meshfile, solver):
 
     ########## SOLVE ##########
 
-    sol, _ = cg_solve.cg_solve(master, mesh, forcing_zero, param, ndim, outdir, approx_sol=None, buildAF=True, solver=solver)
+    sol = cg_solve.cg_solve(master, mesh, forcing_zero, param, ndim, outdir, buildAF=True, solver=solver)
 
     ########## SAVE DATA ##########
 
@@ -106,6 +106,8 @@ def test_3d_cube_linear_dirichlet(porder, meshfile, solver):
         pickle.dump(sol, file)
     logger.info('Wrote solution to file...')
 
+
+    sol = np.squeeze(sol)
 
     ########## ERROR CALCULATION ##########
     exact = exact_linear(mesh['pcg'], 'x')
@@ -122,10 +124,10 @@ def test_3d_cube_linear_dirichlet(porder, meshfile, solver):
 
     ########## CALC DERIVATIVES ##########
 
-    logger.info('Calculating derivatives')
-    grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
-    result = np.concatenate((sol_reshaped[:,None,:], grad.transpose(1,2,0)), axis=1)
+    # logger.info('Calculating derivatives')
+    # grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
+    # result = np.concatenate((sol_reshaped[:,None,:], grad.transpose(1,2,0)), axis=1)
 
     # ########## VISUALIZE SOLUTION ##########
-    viz_driver.viz_driver(mesh, master, result, vis_filename, call_pv)
+    # viz_driver.viz_driver(mesh, master, result, vis_filename, call_pv)
     return norm_error

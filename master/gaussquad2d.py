@@ -2,6 +2,16 @@ from math import ceil
 import numpy as np
 from jacobi import jacobi
 from scipy.io import loadmat
+# Finding the sim root directory
+import sys
+from pathlib import Path
+cwd = Path.cwd()
+for dirname in tuple(cwd.parents):
+    if dirname.name == '3D-CG':
+        sim_root_dir = dirname
+        continue
+
+gq_import_path = str(sim_root_dir.joinpath('master/gaussquad_import/gptsweights.mat'))
 
 def gaussquad1d(pgauss):
 
@@ -29,8 +39,7 @@ def gaussquad2d(pgauss):
 
     if pgauss <= 16:
         import os
-        file = loadmat('/home/gridsan/saustin/research/3D-CG/master/gaussquad_import/gptsweights.mat')
-        # file = loadmat('../../master/gaussquad_import/gptsweights.mat')
+        file = loadmat(gq_import_path)
         x = file['gpts2'][pgauss][0]
         w = np.squeeze(file['gweights2'][pgauss][1])
 
@@ -65,7 +74,7 @@ def gaussquad3d(pgauss):
 
     if pgauss <= 15:
         import os
-        file = loadmat('/home/gridsan/saustin/research/3D-CG/master/gaussquad_import/gptsweights.mat')
+        file = loadmat(gq_import_path)
         x = file['gpts3'][pgauss][0]
         w = np.squeeze(file['gweights3'][pgauss][1])/6      # Explain this magic number
     else:

@@ -1,0 +1,6 @@
+Fix tests
+Check if the high order visualization works, and see if the extract surface tool works
+Verify surface and volume integral calc for a single tet
+Extend that to a surface or body of the cube
+Start to run it on the whole airplane
+Implement normal calc

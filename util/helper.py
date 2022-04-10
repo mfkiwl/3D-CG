@@ -1,6 +1,15 @@
 import numpy as np
+# Finding the sim root directory
 import sys
-sys.path.append('../../master')
+from pathlib import Path
+cwd = Path.cwd()
+for dirname in tuple(cwd.parents):
+    if dirname.name == '3D-CG':
+        sim_root_dir = dirname
+        continue
+
+sys.path.append(str(sim_root_dir.joinpath('master')))
+
 import shap
 import masternodes
 

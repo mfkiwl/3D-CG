@@ -1,0 +1,44 @@
+########## TOP LEVEL SIM SETUP ##########
+casename: boeing_6M_Ex
+meshfile: 'mesh/boeing_plane_final'     # No file extension
+case_select: 'Ex'
+
+########## SOLVER PARAMS ##########
+outdir: 'out/'
+process_mesh: False
+buildAF: False
+compute_sol: False
+call_pv: False
+
+ndim: 3
+porder: &porder 2
+solver: 'gmres'
+solver_tol: 1e-7
+
+visorder: *porder
+viz_labels:
+    scalars:
+        0: Potential
+    vectors:
+        0: Potential Gradient
+
+########## GEOMETRY SETUP ##########
+fuselage_dia: 3.76     # This is the fuselage of the 737 in m
+
+fuselage_pts: 
+    0: [8547.42, 1505.00, 5678.37]
+    1: [8547.42, -1505.00, 5678.37]
+
+########## BOX SURFACE INDICES ##########
+x_minus_face: 138
+x_plus_face: 139
+y_minus_face: 140
+y_plus_face: 141
+z_minus_face: 142
+z_plus_face: 143
+
+########## PHYSICS PARAM ##########
+phys_param:
+    kappa: 1
+    c: [0, 0, 0]
+    s: 0

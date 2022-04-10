@@ -50,6 +50,8 @@ def mkmesh_cube(porder, ndim, meshfile, build_mesh, scale_factor=1.0, stepfile=N
         logger.info('Mesh: master nodes')
         mesh['plocal'], mesh['tlocal'], _, _, _, _, _ = masternodes(porder, 3)
 
+        mesh['nnodes_per_face'] = mesh['gmsh_mapping'][mesh['elemtype']]['nnodes'][mesh['ndim']-1]
+
         # set boundary numbers
         logger.info('Mesh: assigning BC flags')
         mesh = assign_BC_flags(mesh)

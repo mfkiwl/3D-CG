@@ -31,7 +31,7 @@ def forcing_zero(p):
 def test_3d_cube_linear_neumann(porder, meshfile, solver):
 
     ########## INITIALIZE LOGGING ##########
-    logging.config.fileConfig('../../logging/logging.conf', disable_existing_loggers=False)
+    logging.config.fileConfig('../../logging/loggingDEPRECATED.conf', disable_existing_loggers=False)
     # root logger, no __name__ as in submodules further down the hierarchy - this is very important - cost me a lot of time when I passed __name__ to the main logger
     logger = logging.getLogger('root')
     logger.info('*************************** INITIALIZING SIM ***************************')
@@ -43,10 +43,6 @@ def test_3d_cube_linear_neumann(porder, meshfile, solver):
 
     ########## TOP LEVEL SIM SETUP ##########
 
-    # # meshfile = 'mesh/h1.0_tets24'  # Don't include the file extension
-    # meshfile = 'mesh/h0.5_tets101'  # Don't include the file extension
-    # # meshfile = 'mesh/h0.1_tets4686'  # Don't include the file extension
-
     outdir = 'out/'
     meshfile = '../data/' + meshfile
     vis_filename = 'cube_sol'
@@ -57,7 +53,7 @@ def test_3d_cube_linear_neumann(porder, meshfile, solver):
     ndim = 3
 
     # NOTE: Bugs with orders 4, 5, and 6 here in various parts
-                        # viz, viz, and assigning BCs in accessing loc_face_nodes
+    # viz, and assigning BCs in accessing loc_face_nodes
 
     ########## BCs ##########
     # Dirichlet
@@ -93,7 +89,7 @@ def test_3d_cube_linear_neumann(porder, meshfile, solver):
 
     ########## SOLVE ##########
 
-    sol, _ = cg_solve.cg_solve(master, mesh, forcing_zero, param, ndim, outdir, approx_sol=None, buildAF=True, solver=solver)
+    sol = cg_solve.cg_solve(master, mesh, forcing_zero, param, ndim, outdir, buildAF=True, solver=solver)
 
     ########## SAVE DATA ##########
 
@@ -106,6 +102,7 @@ def test_3d_cube_linear_neumann(porder, meshfile, solver):
         pickle.dump(sol, file)
     logger.info('Wrote solution to file...')
 
+    sol = np.squeeze(sol)
 
     ########## ERROR CALCULATION ##########
     exact = exact_linear(mesh['pcg'], 'x')
