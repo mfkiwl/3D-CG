@@ -6,7 +6,7 @@ sys.path.append('../../viz')
 sys.path.append('../../CG')
 import numpy as np
 from import_util import load_mat
-import viz_driver
+import viz
 from cgmesh import cgmesh
 import mkmesh_cube
 import mkmaster
@@ -16,28 +16,13 @@ import calc_derivative
 import os
 import logging
 import logging.config
-
-def exact_cube(p):
-    m=1.5
-    x = p[:, 0]
-    y = p[:, 1]
-    z = p[:, 2]
-    exact = np.sin(m*np.pi*x)# * np.sin(n*np.pi*y) * np.sin(l*np.pi*z)
-    return exact
-
-def forcing_cube(p):
-    # Note: doesn't take kappa into account, might add in later
-    m=1.5
-    forcing_cube = (m**2)*np.pi**2*exact_cube(p)        # We can do this because of the particular sin functions chosen for the exact solution
-    return forcing_cube[:, None]   # returns as column vector
-
-def forcing_zero(p):
-    return np.zeros((p.shape[0], 1))
+import helper
+import domain_helper_fcns
 
 def test_3d_cube_sine_dirichlet(porder, meshfile, solver):
 
     ########## INITIALIZE LOGGING ##########
-    logging.config.fileConfig('../../logging/logging.conf', disable_existing_loggers=False)
+    logging.config.fileConfig('../../logging/loggingDEPRECATED.conf', disable_existing_loggers=False)
     # root logger, no __name__ as in submodules further down the hierarchy - this is very important - cost me a lot of time when I passed __name__ to the main logger
     logger = logging.getLogger('root')
     logger.info('*************************** INITIALIZING SIM ***************************')
@@ -51,15 +36,15 @@ def test_3d_cube_sine_dirichlet(porder, meshfile, solver):
 
     outdir = 'out/'
     meshfile = '../data/' + meshfile
-    vis_filename = 'cube_sol'
-    call_pv = False
     build_mesh = True
-    buildAF = True
-    vis_filename = outdir+vis_filename
+    vis_filename = 'cube_sol'
     ndim = 3
-
+    call_pv = False
+    viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
+    visorder = porder
+    solver_tol=1e-10
+    
     # NOTE: Bugs with orders 4, 5, and 6 here in various parts
-                        # viz, viz, and assigning BCs in accessing loc_face_nodes
 
     ########## BCs ##########
     # Dirichlet
@@ -77,9 +62,6 @@ def test_3d_cube_sine_dirichlet(porder, meshfile, solver):
         2: 0,   # +Z
     }
 
-    # Eventually: add support for the neumann condition being entered as a vector dot product
-    # Long term: neumann robin BC
-
     ########## CREATE MESH ##########
 
     mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, build_mesh)
@@ -94,13 +76,9 @@ def test_3d_cube_sine_dirichlet(porder, meshfile, solver):
     ########## PHYSICS PARAM ##########
     param = {'kappa': 1, 'c': np.array([0, 0, 0]), 's': 0}
 
-    m = 1.5
-    n = 1
-    l = 1
-
     ########## SOLVE ##########
 
-    sol, _ = cg_solve.cg_solve(master, mesh, forcing_cube, param, ndim, outdir, approx_sol=None, buildAF=True, solver=solver)
+    sol = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_cube_mod_sine, param, ndim, outdir, buildAF=True, solver=solver, solver_tol=solver_tol)
 
     ########## SAVE DATA ##########
 
@@ -113,9 +91,10 @@ def test_3d_cube_sine_dirichlet(porder, meshfile, solver):
         pickle.dump(sol, file)
     logger.info('Wrote solution to file...')
 
+    sol = np.squeeze(sol)
 
     ########## ERROR CALCULATION ##########
-    exact = exact_cube(mesh['pcg'])
+    exact = domain_helper_fcns.exact_cube_mod_sine(mesh['pcg'])
     # Reshape into DG high order data structure
     sol_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
     exact_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
@@ -130,9 +109,19 @@ def test_3d_cube_sine_dirichlet(porder, meshfile, solver):
     ########## CALC DERIVATIVES ##########
 
     logger.info('Calculating derivatives')
+
+    # Reshape into DG high order data structure
+    sol_reshaped = helper.reshape_field(mesh, sol[:,None], 'to_array', 'scalars')
+
     grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
-    result = np.concatenate((sol_reshaped[:,None,:], grad.transpose(1,2,0)), axis=1)
+
+    result_out = np.concatenate((sol_reshaped, grad), axis=1)
+
+    with open(outdir+'solution' + vis_filename + '.npy', 'wb') as file:
+        np.save(file, result_out)
+    logger.info('Wrote solution to /out')
 
     # ########## VISUALIZE SOLUTION ##########
-    viz_driver.viz_driver(mesh, master, result, vis_filename, call_pv)
+    # Might have to tweak dimensions based on how the viz functions in the HPC version handle it
+    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad[None,:,:])
     return norm_error

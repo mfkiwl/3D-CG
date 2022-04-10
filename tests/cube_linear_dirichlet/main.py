@@ -6,7 +6,7 @@ sys.path.append('../../viz')
 sys.path.append('../../CG')
 import numpy as np
 from import_util import load_mat
-# import viz_driver
+import viz
 from cgmesh import cgmesh
 import mkmesh_cube
 import mkmaster
@@ -16,17 +16,8 @@ import calc_derivative
 import os
 import logging
 import logging.config
-
-def exact_linear(p, axis):
-    if axis == 'x':
-        return p[:,0]
-    elif axis == 'y':
-        return p[:,1]
-    elif axis == 'z':
-        return p[:, 2]
-
-def forcing_zero(p):
-    return np.zeros((p.shape[0],1))
+import helper
+import domain_helper_fcns
 
 def test_3d_cube_linear_dirichlet(porder, meshfile, solver):
 
@@ -43,21 +34,17 @@ def test_3d_cube_linear_dirichlet(porder, meshfile, solver):
 
     ########## TOP LEVEL SIM SETUP ##########
 
-    # # meshfile = 'mesh/h1.0_tets24'  # Don't include the file extension
-    # meshfile = 'mesh/h0.5_tets101'  # Don't include the file extension
-    # # meshfile = 'mesh/h0.1_tets4686'  # Don't include the file extension
-
     outdir = 'out/'
     meshfile = '../data/' + meshfile
-    vis_filename = 'cube_sol'
-    call_pv = False
     build_mesh = True
-    buildAF = True
-    vis_filename = outdir+vis_filename
+    vis_filename = 'cube_sol'
     ndim = 3
-
+    call_pv = False
+    viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
+    visorder = porder
+    solver_tol=1e-10
+    
     # NOTE: Bugs with orders 4, 5, and 6 here in various parts
-                        # viz, viz, and assigning BCs in accessing loc_face_nodes
 
     ########## BCs ##########
     # Dirichlet
@@ -73,9 +60,6 @@ def test_3d_cube_linear_dirichlet(porder, meshfile, solver):
         1: 0,   # -Z
         2: 0,   # +Z
     }
-
-    # Eventually: add support for the neumann condition being entered as a vector dot product
-    # Long term: neumann robin BC
 
     ########## CREATE MESH ##########
 
@@ -93,7 +77,7 @@ def test_3d_cube_linear_dirichlet(porder, meshfile, solver):
 
     ########## SOLVE ##########
 
-    sol = cg_solve.cg_solve(master, mesh, forcing_zero, param, ndim, outdir, buildAF=True, solver=solver)
+    sol = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_zero, param, ndim, outdir, buildAF=True, solver=solver, solver_tol=solver_tol)
 
     ########## SAVE DATA ##########
 
@@ -110,7 +94,7 @@ def test_3d_cube_linear_dirichlet(porder, meshfile, solver):
     sol = np.squeeze(sol)
 
     ########## ERROR CALCULATION ##########
-    exact = exact_linear(mesh['pcg'], 'x')
+    exact = domain_helper_fcns.exact_linear(mesh['pcg'], 'x')
     # Reshape into DG high order data structure
     sol_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
     exact_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
@@ -124,10 +108,20 @@ def test_3d_cube_linear_dirichlet(porder, meshfile, solver):
 
     ########## CALC DERIVATIVES ##########
 
-    # logger.info('Calculating derivatives')
-    # grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
-    # result = np.concatenate((sol_reshaped[:,None,:], grad.transpose(1,2,0)), axis=1)
+    logger.info('Calculating derivatives')
+
+    # Reshape into DG high order data structure
+    sol_reshaped = helper.reshape_field(mesh, sol[:,None], 'to_array', 'scalars')
+
+    grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
+
+    result_out = np.concatenate((sol_reshaped, grad), axis=1)
+
+    with open(outdir+'solution' + vis_filename + '.npy', 'wb') as file:
+        np.save(file, result_out)
+    logger.info('Wrote solution to /out')
 
     # ########## VISUALIZE SOLUTION ##########
-    # viz_driver.viz_driver(mesh, master, result, vis_filename, call_pv)
+    # Might have to tweak dimensions based on how the viz functions in the HPC version handle it
+    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad[None,:,:])
     return norm_error

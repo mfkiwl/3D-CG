@@ -13,7 +13,7 @@ for dirname in tuple(cwd.parents):
 sys.path.append(str(sim_root_dir.joinpath('util')))
 from math_helper_fcns import inv
 
-def elem_surface_integral(ho_pts, master, field, ndim, returnType='scalar'):
+def face_surface_integral(ho_pts, master, field, ndim):
     if ndim == 2:
         raise NotImplementedError
 
@@ -51,10 +51,8 @@ def elem_surface_integral(ho_pts, master, field, ndim, returnType='scalar'):
         # This is basically the same as in the volume integral case, except that the jacobian determinants represent the transformation from a square in the x-y plane to an arbitrarily oriented square in R^3
         dF = PHI@W@JAC_DET@G_GQ     # This is the contribution to the total integral from this particular volume element
 
-    if returnType == 'scalar':
-        return np.sum(dF)   # Returning as a scalar
-    elif returnType == 'vector':
-        return dF   # Returning as a scalar
+    # return np.sum(dF)   # Returning as a scalar
+    return dF   # Returning as a scalar
 
 def elem_volume_integral(ho_pts, master, field, ndim):
     if ndim == 2:

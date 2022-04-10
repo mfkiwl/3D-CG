@@ -20,7 +20,6 @@ def mkmesh_tet(porder, sol_axis=None):
     mesh = {}
     mesh['ndim'] = 3
     mesh['porder'] = porder
-    # mesh['cgmesh'] = cgmesh.cgmesh(mesh)
     mesh['p'] = np.array([[0, 1, 0],
                         [0, 0, 0],
                         [1, 0, 0],
@@ -40,6 +39,7 @@ def mkmesh_tet(porder, sol_axis=None):
             uh = mesh['pcg'][:,1]  # uh = x coord
         if sol_axis == 'z':
             uh = mesh['pcg'][:,2]  # uh = x coord
-        return mesh, master, uh
     else:
-        return mesh, master
+        uh = None
+
+    return mesh, master, uh

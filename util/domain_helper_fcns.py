@@ -82,6 +82,46 @@ def approx_sol_E_field(mesh, case, u1, u2):
 def forcing_zero(p):
     return np.zeros((p.shape[0], 1))
 
+def exact_linear(p, axis):
+    if axis == 'x':
+        return p[:,0]
+    elif axis == 'y':
+        return p[:,1]
+    elif axis == 'z':
+        return p[:, 2]
+
+def exact_cube_mod_sine(p, m=1.5):
+    x = p[:, 0]
+    y = p[:, 1]
+    z = p[:, 2]
+    exact = np.sin(m*np.pi*x)# * np.sin(n*np.pi*y) * np.sin(l*np.pi*z)
+    return exact
+
+def forcing_cube_mod_sine(p, m=1.5):
+    forcing_cube = (m**2)*np.pi**2*exact_cube_mod_sine(p, m)        # We can do this because of the particular sin functions chosen for the exact solution
+    return forcing_cube[:, None]   # returns as column vector
+
+def exact_sine_cube(p):
+    m = 1
+    n = 1
+    l = 1
+
+    x = p[:, 0]
+    y = p[:, 1]
+    z = p[:, 2]
+    exact = np.sin(m*np.pi*x) * np.sin(n*np.pi*y) * np.sin(l*np.pi*z)
+    return exact
+
+def forcing_sine_cube(p):
+    # Note: doesn't take kappa into account, might add in later
+    m = 1
+    n = 1
+    l = 1
+
+    forcing_cube = (m**2+n**2+l**2)*np.pi**2*exact_sine_cube(p)        # We can do this because of the particular sin functions chosen for the exact solution
+    return forcing_cube[:, None]   # returns as column vector
+
+
 if __name__ == '__main__':
     with open('./mesh/boeing_', 'rb') as file:
         mesh = pickle.load(file)

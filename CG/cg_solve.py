@@ -53,7 +53,7 @@ def assign_bcs(master, mesh, A, F, issparse=True):
 
         elif physical_group in mesh['nbc'].keys():        # Neumann BC
             pts_on_face = mesh['dgnodes'][bdry_elem, loc_face_nodes, :]
-            Ff = quadrature.elem_surface_integral(pts_on_face, master, np.ones((pts_on_face.shape[0],1))*mesh['nbc'][physical_group], 3)
+            Ff = quadrature.elem_surface_integral(pts_on_face, master, np.ones((pts_on_face.shape[0]))*mesh['nbc'][physical_group], 3, returnType='vector')
             F[face_nodes, 0] += Ff
         else:
             raise ValueError('Unknown physical group')
@@ -73,12 +73,14 @@ def call_iter(A_csr, b, tol, x):
         stopping = tol*np.linalg.norm(b)
         error_factor = res_norm/stopping
         delta_x = np.linalg.norm(x-last_x)
+        last_x = x
         logger.info('Iteration ' + str(iter_count) + ', current residual norm is {:.5E}, {:.5E} req\'d for stopping, ratio: {:.3f}, norm(Delta x)={:.5E}'.format(res_norm, stopping, error_factor, delta_x))
     iter_count += 1
     last_x = x
 
 def cg_solve(master, mesh, forcing, param, ndim, outdir, buildAF=True, solver='amg', solver_tol=1e-7):
-
+    global last_x
+    last_x = 0
     if mesh['porder'] == 0:
         raise ValueError('porder > 0 required for continuous galerkin')
 

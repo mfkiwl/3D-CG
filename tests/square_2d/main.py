@@ -20,7 +20,7 @@ import os
 
 def test_2d_square():
     ########## INITIALIZE LOGGING ##########
-    logging.config.fileConfig('../../logging/logging.conf', disable_existing_loggers=False)
+    logging.config.fileConfig('../../logging/loggingDEPRECATED.conf', disable_existing_loggers=False)
     # root logger, no __name__ as in submodules further down the hierarchy - this is very important - cost me a lot of time when I passed __name__ to the main logger
     logger = logging.getLogger('root')
     logger.info('*************************** INITIALIZING SIM ***************************')
@@ -79,10 +79,9 @@ def test_2d_square():
             n*np.pi*x)*np.sin(m*np.pi*y)) + param['c'][1]*m*np.pi*(np.sin(n*np.pi*x)*np.cos(m*np.pi*y)) + param['s']*(np.sin(n*np.pi*x)*np.sin(m*np.pi*y))
         return forcing_square[:, None]   # returns as column vector
 
-    np.set_printoptions(suppress=True, linewidth=np.inf, precision=16)
+    uh =  cg_solve.cg_solve(master, mesh, forcing_square, param, 2, outdir, buildAF=buildAF, solver='direct')
 
-    # uh = cg_solve(master, mesh, forcing_square, param, 2, './out')
-    uh, __ =  cg_solve.cg_solve(master, mesh, forcing_square, param, 2, outdir, approx_sol=None, buildAF=buildAF, solver='direct')
+    uh = np.squeeze(uh)
 
     # Reshape into DG high order data structure
     uh_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
