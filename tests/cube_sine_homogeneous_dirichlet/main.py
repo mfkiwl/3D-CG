@@ -43,7 +43,7 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     ndim = 3
     call_pv = True
     viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
-    visorder = porder*2
+    visorder = porder
     solver_tol=1e-10
     
     # NOTE: Bugs with orders 4, 5, and 6 here in various parts

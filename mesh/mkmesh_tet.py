@@ -14,6 +14,7 @@ import create_dg_nodes
 import cgmesh
 import numpy as np
 import mkmaster
+from mkf_parallel2 import mkt2f_new
 
 def mkmesh_tet(porder, sol_axis=None):
     # Test case for a single tetrahedron
@@ -30,6 +31,7 @@ def mkmesh_tet(porder, sol_axis=None):
     mesh['plocal'], mesh['tlocal'], _, _, _, _, _ = masternodes.masternodes(mesh['porder'], 3)
     mesh['dgnodes'] = create_dg_nodes.create_dg_nodes(mesh, 3)
     mesh['cgmesh'] = cgmesh.cgmesh(mesh)
+    mesh['f'], mesh['t2f'] = mkt2f_new(mesh['t'], 3)
 
     master = mkmaster.mkmaster(mesh, ndim=3, pgauss=2*porder)
 

@@ -89,7 +89,7 @@ def masternodes(porder, ndim):
             tloclist = []
             # Number of pts that you'll traverse in the row depending on which row you're on. Think of this as like strides in a numpy matrix - the stride from one node to the next in a single row is 1, whereas the stride to the next row is DEPENDENT on what row you're on. This is the only difference between it and the numpy stride.
 
-            # Oveall what we're doing is basically just iterating through all the points in C style format [z, y, x], with [x] changing fastest in the innermost loop. For each x value, compute all the tetrahedra in front of it in y and z.
+            # Overall what we're doing is basically just iterating through all the points in C style format [z, y, x], with [x] changing fastest in the innermost loop. For each x value, compute all the tetrahedra in front of it in y and z.
 
             z_layer_offset = 0        # Total number of nodes at all the z levels below
             for k in np.arange(0, porder+1):        # For every row in z
@@ -103,24 +103,35 @@ def masternodes(porder, ndim):
                     # Add parity 1 elements - need 3 here
                     
                     for i in np.arange(ys-1):
-                        if i != ys- 2:
-                            tloclist.append(np.array([i, i+1, i+ys, i+zs(npl, j)])+offset)
-                            tloclist.append(np.array([i+1+zs(npl, j), i+zs(npl, j), i+ys+zs(npl, j+1), i+ys])+offset)
-                            tloclist.append(np.array([i+zs(npl, j), i+1+zs(npl, j), i+1, i+ys])+offset)
-                        else:
-                            # Last parity 1 element in each X ROW needs to be special - only adding main tet
-                            tloclist.append(np.array([i, i+1, i+ys, i+zs(npl, j)])+offset)
+                        bxpt1 = i
+                        bxpt2 = i+1
+                        bxpt3 = i+ys
+                        bxpt4 = i+1+ys
+                        bxpt5 = i+zs(npl, j)
+                        bxpt6 = i+1+zs(npl, j)
+                        bxpt7 = i+ys+zs(npl, j+1)
+                        bxpt8 = i+1+ys+zs(npl, j+1)
 
-                    # Add parity -1 elements - need 3 here
-                    for i in np.arange(ys-2):
-                        if i != ys - 3:
-                            tloclist.append(np.array([i+1+ys, i+ys, i+1, i+1+ys+zs(npl, j+1)])+offset)
-                            tloclist.append(np.array([i+ys+zs(npl, j+1), i+1+ys+zs(npl, j+1), i+1+zs(npl, j), i+1])+offset)
-                            tloclist.append(np.array([i+1+ys+zs(npl, j+1), i+ys+zs(npl, j+1), i+ys, i+1])+offset)
+                        # Strategy: divide the master element into sub-cubes and iterate through each one by row. For each row of sub-cubes, there will be two partial cubes at the end - one having 5 tets and the other having only 1. These are represented below
+                        # This can be easily tested by making a 8-point mesh with a single cube and then building the connectivity matrix like the indexing here.
+                        if i == ys-2:
+                            # 
+                            tloclist.append(np.array([bxpt1, bxpt2, bxpt3, bxpt5])+offset)
+                        elif i == ys-3:
+                            tloclist.append(np.array([bxpt1, bxpt4, bxpt3, bxpt5])+offset)
+                            tloclist.append(np.array([bxpt1, bxpt2, bxpt4, bxpt5])+offset)
+                            tloclist.append(np.array([bxpt2, bxpt6, bxpt4, bxpt5])+offset)
+                            tloclist.append(np.array([bxpt3, bxpt4, bxpt7, bxpt5])+offset)
+                            tloclist.append(np.array([bxpt7, bxpt6, bxpt5, bxpt4])+offset)
                         else:
-                            # Last parity -1 in each X ROW needs to be special in TYPE II
-                            tloclist.append(np.array([i+1+ys, i+1+zs(npl, j), i+ys+zs(npl, j+1), i+ys])+offset)
-                            tloclist.append(np.array([i+1+ys, i+1, i+1+zs(npl, j), i+ys])+offset)
+                            # From this stackexchage post: https://puzzling.stackexchange.com/questions/12838/partition-a-cube-into-6-congruent-tetrahedra
+                            tloclist.append(np.array([bxpt1, bxpt4, bxpt3, bxpt5])+offset)
+                            tloclist.append(np.array([bxpt1, bxpt2, bxpt4, bxpt5])+offset)
+                            tloclist.append(np.array([bxpt2, bxpt6, bxpt4, bxpt5])+offset)
+                            tloclist.append(np.array([bxpt3, bxpt4, bxpt7, bxpt5])+offset)
+                            tloclist.append(np.array([bxpt4, bxpt8, bxpt7, bxpt5])+offset)
+                            tloclist.append(np.array([bxpt4, bxpt8, bxpt5, bxpt6])+offset)
+
                     y_layer_offset += ys
                 z_layer_offset += npl
 

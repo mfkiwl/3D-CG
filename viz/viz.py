@@ -13,6 +13,8 @@ import vtk
 import pyvista as pv
 import os
 import logging
+import gmshwrite
+from mkf_parallel2 import mkt2f_new
 
 logger = logging.getLogger(__name__)
 
@@ -88,19 +90,13 @@ def visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=None, vecto
     else:
         raise ValueError('Vizorder must be greater than or equal to the mesh order')
 
-
-    # from mkf_parallel2 import mkt2f_new
-    # f,_ = mkt2f_new(viz_mesh['linear_cg_mesh'], 3)
-    # # print('here')
-    # # print(f)
-    # bdry_faces = f[f[:, -1] < 0, :]     # This can be extended to inputting a list of arbitrary boundary faces, doesn't have to be *all* the faces on the boundary
-    # # Write the mesh to a file to visualize in gmsh
-    # import gmshwrite
-    # # print(viz_mesh['linear_cg_mesh'].keys)
-    # gmshwrite.gmshwrite(viz_mesh['pcg'], viz_mesh['linear_cg_mesh'], 'mesh_gmshwrite_linear_out', bdry_faces)
-    # print('wrote mesh to file')
-
-    generate_vtu(viz_mesh['pcg'], viz_mesh['linear_cg_mesh'], scalars, vectors, labels, vis_filename, call_pv)
+    # print(mesh['plocal'])
+    # print()
+    # print(viz_mesh['pcg'])
+    f,__ = mkt2f_new(viz_mesh['t_linear'], 3)
+    gmshwrite.gmshwrite(viz_mesh['pcg'], viz_mesh['t_linear'], 'global_mesh', f[f[:, -1] < 0, :])
+    # exit()
+    generate_vtu(viz_mesh['pcg'], viz_mesh['t_linear'], scalars, vectors, labels, vis_filename, call_pv)
 
 
 if __name__ == '__main__':
