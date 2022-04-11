@@ -24,3 +24,4 @@ CG/uh2d.mat
 !/tests/data/*.msh
 /tests/amg_test/
 *mesh_save
+*.out
