@@ -10,7 +10,8 @@ for dirname in tuple(cwd.parents):
 sys.path.append(str(sim_root_dir.joinpath('master')))
 sys.path.append(str(sim_root_dir.joinpath('CG')))
 sys.path.append(str(sim_root_dir.joinpath('mesh')))
-
+sys.path.append(str(sim_root_dir.joinpath('viz')))
+import viz
 import mkmaster
 import quadrature
 import mkmesh_tet
@@ -30,10 +31,21 @@ def single_tet(porder):
     # This should be 1/6=0.16666666666666666, but instead I am getting (1/6)
 
     error = np.linalg.norm(np.array([surf_int, vol_int])-np.array([0.5, 0.16666666666666666]))
+
+    # Write the mesh to a file to visualize in gmsh
+    sys.path.append(str(sim_root_dir.joinpath('util')))
+    import gmshwrite
+    gmshwrite.gmshwrite(mesh['p'], mesh['t'], 'mesh_out')
+    print('wrote mesh to file')
+
+    viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
+
+    viz.visualize(mesh, mesh['porder'], viz_labels, 'vis_tet', False, scalars=mesh['pcg'][:,0][:,None])
+
     return error
 
 if __name__ == '__main__':
-    print(single_tet(1))
-    print(single_tet(2))
+    # print(single_tet(1))
+    # print(single_tet(2))
     print(single_tet(3))
-    print(single_tet(4))
+    # print(single_tet(4))

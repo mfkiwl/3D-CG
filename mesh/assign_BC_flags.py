@@ -52,8 +52,7 @@ def assign_BC_flags(mesh):
 
             if face_bool:
                 # Assign the boundary flag to the negative boundary ID
-                mesh['f'][bdry_faces_start_idx+iface, -1] = - \
-                    pg_dict[phys_group]['idx']
+                mesh['f'][bdry_faces_start_idx+iface, -1] = -pg_dict[phys_group]['idx']
                 t2f_bdry[elem, :][~mask] = pg_dict[phys_group]['idx']
                 found_flag = True
 

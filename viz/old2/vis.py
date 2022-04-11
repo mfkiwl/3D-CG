@@ -2,7 +2,7 @@ import os, sys, shutil
 from numpy import *
 from createcggrid import createcggrid
 from vtuwrite import vtuwrite
-from masternodes import masternodes
+from master_nodes import masternodes
 from createdgnodes import createdgnodes
 from mkshape import mkshape
 import logging
@@ -20,6 +20,8 @@ def vis(visfields, app, mesh, fname, call_pv):
     else:
         visorder = app['porder'];
 
+    visorder=8
+
     mesh['xpe'] = masternodes(app['porder'],app['nd'],app['elemtype'])[0];
     xpe,telem = masternodes(visorder,app['nd'],app['elemtype'])[0:2];
 
@@ -33,6 +35,7 @@ def vis(visfields, app, mesh, fname, call_pv):
     tm = matmul(visshape,reshape(visfields[:,:,app['viselem']],(visshape.shape[1], visfields.shape[1]*len(app['viselem'])), 'F'));
     tm = reshape(tm,(visshape.shape[0], visfields.shape[1], len(app['viselem'])),'F');
 
+    print(tm)
     vtuwrite(fname, cgnodes, cgelcon, cgcells, celltype, app['visscalars'], app['visvectors'], tm);
 
     logging.info('Wrote .VTU to '+fname)

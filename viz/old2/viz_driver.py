@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def viz_driver(mesh, master, sol, fname, call_pv):
+def viz_driver(mesh, sol, fname, call_pv):
 
     mesh['t'] = mesh['t'].T
     mesh['p'] = mesh['p'].T
@@ -26,8 +26,8 @@ def viz_driver(mesh, master, sol, fname, call_pv):
 
     # pde['visscalars'] = ["potential", 0, 'x0', 4]; # list of scalar fields for visualization
     pde['visscalars'] = ["potential", 0]; # list of scalar fields for visualization
-    pde['visvectors'] = ["potential gradient", np.array([1, 2, 3]).astype(int)]; # list of vector fields for visualization
-    # pde['visvectors'] = []
+    # pde['visvectors'] = ["potential gradient", np.array([1, 2, 3]).astype(int)]; # list of vector fields for visualization
+    pde['visvectors'] = []
     pde['visfilename'] = 'sol_out'
 
     _ = vis.vis(sol, pde, mesh, fname, call_pv)  # visualize the numerical solution

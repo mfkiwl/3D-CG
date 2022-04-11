@@ -88,6 +88,18 @@ def visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=None, vecto
     else:
         raise ValueError('Vizorder must be greater than or equal to the mesh order')
 
+
+    # from mkf_parallel2 import mkt2f_new
+    # f,_ = mkt2f_new(viz_mesh['linear_cg_mesh'], 3)
+    # # print('here')
+    # # print(f)
+    # bdry_faces = f[f[:, -1] < 0, :]     # This can be extended to inputting a list of arbitrary boundary faces, doesn't have to be *all* the faces on the boundary
+    # # Write the mesh to a file to visualize in gmsh
+    # import gmshwrite
+    # # print(viz_mesh['linear_cg_mesh'].keys)
+    # gmshwrite.gmshwrite(viz_mesh['pcg'], viz_mesh['linear_cg_mesh'], 'mesh_gmshwrite_linear_out', bdry_faces)
+    # print('wrote mesh to file')
+
     generate_vtu(viz_mesh['pcg'], viz_mesh['linear_cg_mesh'], scalars, vectors, labels, vis_filename, call_pv)
 
 

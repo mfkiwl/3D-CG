@@ -12,7 +12,6 @@ def create_linear_cg_mesh(mesh):
 
     """
 
-    # start = time.perf_counter()
     ntlocal = mesh['tlocal'].shape[0]
 
     # Could be written as a double for loop, but vectorized for speed

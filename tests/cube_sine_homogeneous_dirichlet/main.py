@@ -2,6 +2,7 @@ import sys
 sys.path.append('../../util')
 sys.path.append('../../mesh')
 sys.path.append('../../master')
+# sys.path.append('../../viz/old2')
 sys.path.append('../../viz')
 sys.path.append('../../CG')
 import numpy as np
@@ -38,10 +39,11 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     meshfile = '../data/' + meshfile
     build_mesh = True
     vis_filename = 'cube_sol'
+    vis_filename = outdir+'solution_' + vis_filename
     ndim = 3
-    call_pv = False
+    call_pv = True
     viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
-    visorder = porder
+    visorder = porder*2
     solver_tol=1e-10
     
     # NOTE: Bugs with orders 4, 5, and 6 here in various parts
@@ -115,11 +117,18 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
 
     result_out = np.concatenate((sol_reshaped, grad), axis=1)
 
-    with open(outdir+'solution' + vis_filename + '.npy', 'wb') as file:
+    with open(vis_filename + '.npy', 'wb') as file:
         np.save(file, result_out)
     logger.info('Wrote solution to /out')
 
     # ########## VISUALIZE SOLUTION ##########
     # Might have to tweak dimensions based on how the viz functions in the HPC version handle it
     viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad[None,:,:])
+
+    # Old version of viz scripts
+    # logger.info('Calculating derivatives')
+    # grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
+    # import viz_driver
+    # viz_driver.viz_driver(mesh, sol_reshaped[:,None,:], 'cuong_viz', True)
+    
     return norm_error

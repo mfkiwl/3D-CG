@@ -6,7 +6,8 @@ def masternodes(porder,dim,elemtype):
     # d0 = os.getcwd();
     # ii = d0.find("Exasim");
 
-    fn = '../../viz/masternodes.bin'        # Indexed relative to case run directory
+    fn = '/media/homehd/saustin/lightning_research/3D-CG/viz/old2/masternodes.bin'
+        # Indexed relative to case run directory
     with open(fn, "r") as file:
         tmp = numpy.fromfile(file, dtype=numpy.float64);
     ndims = numpy.int_(tmp[0]);
