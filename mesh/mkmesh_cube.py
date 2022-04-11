@@ -15,7 +15,7 @@ import cgmesh
 
 logger = logging.getLogger(__name__)
 
-def mkmesh_cube(porder, ndim, meshfile, build_mesh, scale_factor=1.0, stepfile=None, body_surfs=None):
+def mkmesh_cube(porder, ndim, meshfile, build_mesh, scale_factor=1.0):
 
     mesh_save = meshfile + '_processed'
 
@@ -29,13 +29,11 @@ def mkmesh_cube(porder, ndim, meshfile, build_mesh, scale_factor=1.0, stepfile=N
     else:
         logger.info('Mesh: processing mesh...')
         mesh = process_mesh(meshfile, ndim, 4, 2)
-        gmsh_mapping = {0: {'node_ID': [15, 1, 2, 4], 'nnodes': [1, 2, 3, 4]}, 1: {'node_ID': [15, 1, 3, 5], 'nnodes': [1, 2, 4, 8]}}     # Maps
+        gmsh_mapping = {0: {'node_ID': [15, 1, 2, 4], 'nnodes': [1, 2, 3, 4]}, 1: {'node_ID': [15, 1, 3, 5], 'nnodes': [1, 2, 4, 8]}}
         mesh['gmsh_mapping'] = gmsh_mapping
 
         mesh['meshfile'] = meshfile+'.msh'
 
-        mesh['body_surfs'] = body_surfs
-        mesh['stepfile'] = stepfile
         mesh['scale_factor'] = scale_factor
         mesh['p'] *= scale_factor
         mesh['bbox_after_scale'] = {'x': [np.min(mesh['p'][:,0]), np.max(mesh['p'][:,0])], 'y': [np.min(mesh['p'][:,1]), np.max(mesh['p'][:,1])], 'z': [np.min(mesh['p'][:,2]), np.max(mesh['p'][:,2])]}

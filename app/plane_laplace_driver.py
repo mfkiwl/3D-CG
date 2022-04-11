@@ -40,13 +40,13 @@ process_mesh = config_dict['process_mesh']
 buildAF = config_dict['buildAF']
 compute_sol = config_dict['compute_sol']
 call_pv = config_dict['call_pv']
-ndim = config_dict['ndim']
-porder = config_dict['porder']
+ndim = int(config_dict['ndim'])
+porder = int(config_dict['porder'])
 solver = config_dict['solver']
-solver_tol = config_dict['solver_tol']
-visorder = config_dict['visorder']
+solver_tol = float(config_dict['solver_tol'])
+visorder = int(config_dict['visorder'])
 viz_labels = config_dict['viz_labels']
-fuselage_dia = config_dict['fuselage_dia']
+fuselage_dia = float(config_dict['fuselage_dia'])
 fuselage_pts = config_dict['fuselage_pts']
 x_minus_face = config_dict['x_minus_face_index']
 x_plus_face = config_dict['x_plus_face_index']
@@ -87,8 +87,8 @@ try:
         logger.info('out/ directory not present, created...')
 
     ########## TOP LEVEL SIM SETUP ##########
-    r_fuselage_msh= np.linalg.norm(np.asarray(fuselage_pts[0])-np.asarray(fuselage_pts[1]))/2
-    scale_factor=  fuselage_dia/r_fuselage_msh    # Normalize mesh by the fuselage radius and rescale so that mesh dimensions are in meters
+    d_fuselage_msh= np.linalg.norm(np.asarray(fuselage_pts[0])-np.asarray(fuselage_pts[1]))
+    scale_factor=  fuselage_dia/d_fuselage_msh    # Normalize mesh by the fuselage radius and rescale so that mesh dimensions are in meters
 
     vis_filename = outdir+casename
 
@@ -96,7 +96,7 @@ try:
     surf_faces = np.arange(min(bdry)-1)+1         # Number of faces on aircraft body is implied from the value of the min face, which is assigned after the aircraft surfaces in the mesh generator script
     nbc = {face:0 for face in bdry}
 
-    if case_select == 'charged_surface':
+    if case_select == 'Phi':
         dbc = {face:1 for face in surf_faces}
         dbc.update(nbc)     # Concatenating two dictionaries together
         nbc = {}
@@ -111,7 +111,7 @@ try:
     elif case_select == 'Ez':
         dbc = {face:0 for face in surf_faces}
         nbc[z_minus_face] = -1
-        nbc[y_plus_face] = 1
+        nbc[z_plus_face] = 1
 
     ########## LOGGING SIM PARAMETERS ##########
     logger.info('Case type: '+case_select)
@@ -134,7 +134,7 @@ try:
 
     if compute_sol:
         ########## CREATE MESH ##########
-        mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, process_mesh, scale_factor, stepfile, body_surfs)
+        mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, process_mesh, scale_factor)
         mesh['dbc'] = dbc
         mesh['nbc'] = nbc
 
@@ -156,8 +156,6 @@ try:
             pickle.dump(master, file)
         with open(outdir+'sol', 'wb') as file:
             pickle.dump(sol, file)
-        with open(outdir+'x0', 'wb') as file:
-            pickle.dump(x0, file)
         logger.info('Wrote solution to file...')
     else:
         ########## LOADING SOLUTION ##########
@@ -170,26 +168,26 @@ try:
             master = pickle.load(file)
         with open(outdir+'sol', 'rb') as file:
             sol = pickle.load(file)
-        with open(outdir+'x0', 'rb') as file:
-            x0 = pickle.load(file)
 
     ########## CALC DERIVATIVES ##########
     logger.info('Calculating derivatives')
 
     # Reshape into DG high order data structure
-    sol_reshaped = helper.reshape_field(mesh, sol[:,None], 'to_array', 'scalars')
+    sol_reshaped = helper.reshape_field(mesh, sol, 'to_array', 'scalars')
 
-    grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
+    grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)[None,:,:]
 
-    result_out = np.concatenate((sol[:,None], grad), axis=1)
+    grad_reshaped = helper.reshape_field(mesh, grad, 'to_column', 'vectors')
 
-    with open(outdir+'solution' + vis_filename + '.npy', 'wb') as file:
+    result_out = np.concatenate((sol, np.squeeze(grad_reshaped)), axis=1)    # Column 0 is the solution vector at the pcg nodes, and cols [1-3] are the gradient at the pcg nodes
+
+    with open(vis_filename + '_solution.npy', 'wb') as file:
         np.save(file, result_out)
     logger.info('Wrote solution to /out')
 
     ########## VISUALIZE SOLUTION ##########
 
     logger.info('Generating .VTU file of solution...')
-    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad[None,:,:])
+    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol, vectors=grad)
 except Exception as e:
-    logger.exception()
+    logger.exception('message')

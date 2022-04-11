@@ -1,13 +1,13 @@
 ########## TOP LEVEL SIM SETUP ##########
 casename: boeing_6M_Ex
-meshfile: 'mesh/boeing_plane_final'     # No file extension
+meshfile: '../mesh/boeing_plane_final'     # No file extension
 case_select: 'Ex'
 
 ########## SOLVER PARAMS ##########
 outdir: 'out/'
-process_mesh: False
-buildAF: False
-compute_sol: False
+process_mesh: True
+buildAF: True
+compute_sol: True
 call_pv: False
 
 ndim: 3
@@ -23,7 +23,7 @@ viz_labels:
         0: Potential Gradient
 
 ########## GEOMETRY SETUP ##########
-fuselage_dia: 3.76     # This is the fuselage of the 737 in m
+fuselage_dia: 3.76     # This is the fuselage diameter of the 737 in m
 
 fuselage_pts: 
     0: [8547.42, 1505.00, 5678.37]
