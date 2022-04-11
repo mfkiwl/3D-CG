@@ -12,6 +12,8 @@ for dirname in tuple(cwd.parents):
 
 sys.path.append(str(sim_root_dir.joinpath('util')))
 from math_helper_fcns import inv
+import multiprocessing as mp
+from functools import partial
 
 def elem_surface_integral(ho_pts, master, field, ndim, returnType='scalar'):
     if ndim == 2:
@@ -103,3 +105,82 @@ def elem_volume_integral(ho_pts, master, field, ndim):
         dF = PHI@W@JAC_DET@G_GQ     # This is the contribution to the total integral from this particular volume element
 
     return np.sum(dF)   # Returning as a scalar
+
+def surface_integral_serial(mesh, master, scalar_field, faces, nnodes_per_face):
+   
+    #NOTE: Eventually delete the nnodes_per_face param when the sims are re-run with the mesh supporting that field
+    # Loop over each element like in the cgsolve BC assignment and perform the numerical integration 
+    integral_qty = 0
+    
+    for face in faces:
+        # print(face)
+        facenum = face[0]      # t2f uses 1-indexing for the faces
+        bdry_elem = face[nnodes_per_face+1] # Adding 1 because we put the global face index in the first column and moved the rest over
+        # print(bdry_elem)
+        # Collect nodes of faces on boundary ONLY
+        # Find the index that the face is in in t2f
+        # print(mesh['t2f'][bdry_elem, :])
+        # print(mesh['t2f'][bdry_elem+1, :])
+        # print(mesh['t2f'][bdry_elem-1, :])
+        # print(facenum)
+        # exit()
+
+        loc_face_idx = np.where(mesh['t2f'][bdry_elem, :] == facenum)[0][0]
+        # Pull the local nodes on that face from permface - we don't want to include all the nodes in the element
+        loc_face_nodes = master['perm'][:, loc_face_idx]
+
+        # Use the perm indices to grab the face nodes from tcg
+        face_nodes = mesh['tcg'][bdry_elem][loc_face_nodes]
+
+        field_vals = scalar_field[face_nodes]
+
+        # Also try pts_on_face = mesh['dgnodes'][bdry_elem, loc_face_nodes, :] instead of mesh['pcg'][:,face_nodes], but they should be the same
+        integral_qty += elem_surface_integral(mesh['pcg'][face_nodes,:], master, field_vals, mesh['ndim'], 'scalar')
+
+    return integral_qty
+
+def surface_integral_parallel(mesh, master, scalar_field, faces, nnodes_per_face):
+   
+    #NOTE: Eventually delete the nnodes_per_face param when the sims are re-run with the mesh supporting that field
+    # Loop over each element like in the cgsolve BC assignment and perform the numerical integration 
+    
+    with mp.Pool(mp.cpu_count()) as pool:
+        result = pool.map(partial(get_surface_dQ, mesh, master, scalar_field, nnodes_per_face, faces), np.arange(faces.shape[0]))
+    return sum(result)
+
+def get_surface_dQ(mesh, master, scalar_field, nnodes_per_face, faces, face_idx):
+    face = faces[face_idx]
+    facenum = face[0]      # t2f uses 1-indexing for the faces
+    bdry_elem = face[nnodes_per_face+1] # Adding 1 because we put the global face index in the first column and moved the rest over
+
+    # Collect nodes of faces on boundary ONLY
+    # Find the index that the face is in in t2f
+    loc_face_idx = np.where(mesh['t2f'][bdry_elem, :] == facenum)[0][0]
+    # Pull the local nodes on that face from permface - we don't want to include all the nodes in the element
+    loc_face_nodes = master['perm'][:, loc_face_idx]
+
+    # Use the perm indices to grab the face nodes from tcg
+    face_nodes = mesh['tcg'][bdry_elem][loc_face_nodes]
+
+    field_vals = scalar_field[face_nodes]
+
+    # Also try pts_on_face = mesh['dgnodes'][bdry_elem, loc_face_nodes, :] instead of mesh['pcg'][:,face_nodes], but they should be the same
+    dQ = elem_surface_integral(mesh['pcg'][face_nodes,:], master, field_vals, mesh['ndim'], 'scalar')
+    
+    return dQ
+
+def volume_integral(mesh, master, scalar_field, elements):
+    """
+    elements is a list of all the elements that are in the domain of integration
+
+    """
+
+    integral_qty = 0
+
+    for element in elements:
+        dgpts = mesh['dgnodes'][element,:,:]
+        field_vals = scalar_field[mesh['tcg'][element]]
+
+        integral_qty += elem_volume_integral(dgpts, master, field_vals, mesh['ndim'])
+
+    return integral_qty

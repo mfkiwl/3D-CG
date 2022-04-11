@@ -3,29 +3,48 @@
 import unittest
 import os
 
-class QuadratureTests(unittest.TestCase):
+class SingleElemQuadratureTests(unittest.TestCase):
     def test_single_tet_quadrature_porder1(self):
         os.chdir('./single_tet_quadrature')
         import single_tet_quadrature.single_tet_quadrature
-        self.assertAlmostEqual(single_tet_quadrature.single_tet_quadrature.single_tet(1), 0, places=10)
+        self.assertAlmostEqual(single_tet_quadrature.single_tet_quadrature.single_tet(1), 0, places=12)
         os.chdir('../')
 
     def test_single_tet_quadrature_porder2(self):
         os.chdir('./single_tet_quadrature')
         import single_tet_quadrature.single_tet_quadrature
-        self.assertAlmostEqual(single_tet_quadrature.single_tet_quadrature.single_tet(2), 0, places=10)
+        self.assertAlmostEqual(single_tet_quadrature.single_tet_quadrature.single_tet(2), 0, places=12)
         os.chdir('../')
 
     def test_single_tet_quadrature_porder3(self):
         os.chdir('./single_tet_quadrature')
         import single_tet_quadrature.single_tet_quadrature
-        self.assertAlmostEqual(single_tet_quadrature.single_tet_quadrature.single_tet(3), 0, places=10)
+        self.assertAlmostEqual(single_tet_quadrature.single_tet_quadrature.single_tet(3), 0, places=12)
         os.chdir('../')
 
     def test_single_tet_quadrature_porder4(self):
         os.chdir('./single_tet_quadrature')
         import single_tet_quadrature.single_tet_quadrature
-        self.assertAlmostEqual(single_tet_quadrature.single_tet_quadrature.single_tet(4), 0, places=10)
+        self.assertAlmostEqual(single_tet_quadrature.single_tet_quadrature.single_tet(4), 0, places=12)
+        os.chdir('../')
+
+class MultiElemQuadratureTests(unittest.TestCase):
+    def test_cube_quadrature_vol_porder3(self):
+        os.chdir('./multielement_quadrature_test')
+        import multielement_quadrature_test.multielem_quad
+        self.assertAlmostEqual(multielement_quadrature_test.multielem_quad.volume_unit_cube(), 1, places=12)
+        os.chdir('../')
+
+    def test_cube_quadrature_one_face_porder3(self):
+        os.chdir('./multielement_quadrature_test')
+        import multielement_quadrature_test.multielem_quad
+        self.assertAlmostEqual(multielement_quadrature_test.multielem_quad.area_unit_square_one_face(), 1, places=12)
+        os.chdir('../')
+
+    def test_cube_quadrature_all_faces_porder3(self):
+        os.chdir('./multielement_quadrature_test')
+        import multielement_quadrature_test.multielem_quad
+        self.assertAlmostEqual(multielement_quadrature_test.multielem_quad.unit_square_total_surf_area(), 6, places=12)
         os.chdir('../')
 
 class SquareSine2DTests(unittest.TestCase):
