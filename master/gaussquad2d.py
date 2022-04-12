@@ -76,7 +76,7 @@ def gaussquad3d(pgauss):
         import os
         file = loadmat(gq_import_path)
         x = file['gpts3'][pgauss][0]
-        w = np.squeeze(file['gweights3'][pgauss][1])      # Explain this magic number
+        w = np.squeeze(file['gweights3'][pgauss][1])
     else:
         raise NotImplementedError('GQ degree > 16 not supported!')
 

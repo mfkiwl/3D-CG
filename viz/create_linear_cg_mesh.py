@@ -26,13 +26,6 @@ def create_linear_cg_mesh(mesh):
 
     linear_cg_mesh=tcg_flat[idx_arry]
 
-    # Loop through each element
-    # If there's another element that shares its faces, flip the orientation
-
-    # print(linear_cg_mesh.shape[0])
-    # exit()
-
-
     mesh['t_linear'] = linear_cg_mesh
 
     return mesh

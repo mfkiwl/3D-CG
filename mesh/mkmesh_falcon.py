@@ -97,6 +97,7 @@ def import_falcon_mesh(porder, ndim, meshfile, build_mesh):
         logger.info('Converting high order mesh to CG...')
         mesh = cgmesh.cgmesh(mesh)
 
+        logger.info('Writing gmsh .msh file...')
         gmshwrite.gmshwrite(mesh['p'], mesh['t'], meshfile, mesh['f'])
 
         # Saving mesh to disk

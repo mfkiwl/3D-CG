@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+from py import process
+
 # Finding the sim root directory
 cwd = Path.cwd()
 for dirname in tuple(cwd.parents):
@@ -46,8 +48,7 @@ solver = config_dict['solver']
 solver_tol = float(config_dict['solver_tol'])
 visorder = int(config_dict['visorder'])
 viz_labels = config_dict['viz_labels']
-fuselage_dia = float(config_dict['fuselage_dia'])
-fuselage_pts = config_dict['fuselage_pts']
+
 x_minus_face = config_dict['x_minus_face_index']
 x_plus_face = config_dict['x_plus_face_index']
 y_minus_face = config_dict['y_minus_face_index']
@@ -55,6 +56,20 @@ y_plus_face = config_dict['y_plus_face_index']
 z_minus_face = config_dict['z_minus_face_index']
 z_plus_face = config_dict['z_plus_face_index']
 phys_param = config_dict['phys_param']
+
+if 'scale_factor' in config_dict:   # Allows the mesh scale factor to be entered manually instead of from a set of points in the mesh
+    scale_factor = config_dict['scale_factor']
+else:
+    fuselage_dia = float(config_dict['fuselage_dia'])
+    fuselage_pts = config_dict['fuselage_pts']
+    d_fuselage_msh= np.linalg.norm(np.asarray(fuselage_pts[0])-np.asarray(fuselage_pts[1]))
+    scale_factor = fuselage_dia/d_fuselage_msh    # Normalize mesh by the fuselage radius and rescale so that mesh dimensions are in meters
+
+if 'surface_index' in config_dict:  # Allows for manual entry of the face index of the aircraft surface instead of automatically calculating it from the boundary fields
+    surf_faces = config_dict['surface_index']
+else:
+    bdry = (x_minus_face, x_plus_face, y_minus_face, y_plus_face, z_minus_face, z_plus_face)
+    surf_faces = np.arange(min(bdry)-1)+1         # Number of faces on aircraft body is implied from the value of the min face, which is assigned after the aircraft surfaces in the mesh generator script
 
 logger = logger_cfg.initialize_logger(casename)
 logger.info('*************************** INITIALIZING SIM ' +str(datetime.datetime.now())+' ***************************')
@@ -64,6 +79,7 @@ import numpy as np
 import viz
 from cgmesh import cgmesh
 import mkmesh_cube
+import mkmesh_falcon
 import mkmaster
 import cg_solve
 import pickle
@@ -87,13 +103,8 @@ try:
         logger.info('out/ directory not present, created...')
 
     ########## TOP LEVEL SIM SETUP ##########
-    d_fuselage_msh= np.linalg.norm(np.asarray(fuselage_pts[0])-np.asarray(fuselage_pts[1]))
-    scale_factor=  fuselage_dia/d_fuselage_msh    # Normalize mesh by the fuselage radius and rescale so that mesh dimensions are in meters
-
     vis_filename = outdir+casename
 
-    bdry = (x_minus_face, x_plus_face, y_minus_face, y_plus_face, z_minus_face, z_plus_face)
-    surf_faces = np.arange(min(bdry)-1)+1         # Number of faces on aircraft body is implied from the value of the min face, which is assigned after the aircraft surfaces in the mesh generator script
     nbc = {face:0 for face in bdry}
 
     if case_select == 'Phi':
@@ -134,7 +145,10 @@ try:
 
     if compute_sol:
         ########## CREATE MESH ##########
-        mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, process_mesh, scale_factor)
+        if 'falcon' in meshfile:
+            mesh = mkmesh_falcon.import_falcon_mesh(porder, ndim, meshfile, process_mesh)
+        else:
+            mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, process_mesh, scale_factor)
         mesh['dbc'] = dbc
         mesh['nbc'] = nbc
 

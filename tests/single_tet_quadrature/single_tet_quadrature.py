@@ -25,6 +25,7 @@ def single_tet(porder):
     mesh, master = mkmesh_tet.mkmesh_tet(porder)
     ndof_vol = mesh['plocal'].shape[0]
     ndof_face = master['perm'].shape[0]
+    call_pv = False
 
     # np.set_printoptions(suppress=True, linewidth=np.inf, precision=10)
 
@@ -42,7 +43,7 @@ def single_tet(porder):
     gmshwrite.gmshwrite(mesh['p'], mesh['t'], 'mesh', mesh['f'][mesh['f'][:, -1] < 0, :], 'individual')
 
     viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
-    viz.visualize(mesh, mesh['porder'], viz_labels, 'vis_tet', True, scalars=mesh['pcg'][:,0][:,None])
+    viz.visualize(mesh, mesh['porder'], viz_labels, 'vis_tet', call_pv, scalars=mesh['pcg'][:,0][:,None])
     return error
 
 if __name__ == '__main__':

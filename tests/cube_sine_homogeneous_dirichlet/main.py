@@ -41,7 +41,7 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     vis_filename = 'cube_sol'
     vis_filename = outdir+'solution_' + vis_filename
     ndim = 3
-    call_pv = True
+    call_pv = False
     viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
     visorder = porder
     solver_tol=1e-10

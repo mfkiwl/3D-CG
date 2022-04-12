@@ -46,7 +46,7 @@ def elem_surface_integral(ho_pts, master, field, ndim, returnType='scalar'):
         JAC_DET = np.zeros((n_gqpts))
 
         for i in np.arange(n_gqpts):
-            JAC_DET[i] = np.linalg.norm(np.cross(J[i, 0, :], J[i, 1, :])) # Magic number 1/3 to correct scaling issue seen - not quite sure why here - but maybe the (1/2) and (1/3) should be combined to make (1/6) under the mapping from a cube to a tet volume? Not quite sure here.
+            JAC_DET[i] = np.linalg.norm(np.cross(J[i, 0, :], J[i, 1, :]))
 
         JAC_DET = np.diag(JAC_DET)
 
@@ -90,16 +90,16 @@ def elem_volume_integral(ho_pts, master, field, ndim):
         J[:, 2, 2] = DPHI_DGAMMA.T@ho_pts[:, 2]    # DZ_DGAMMA
 
         # Determinants of Jacobians stored as a matrix, diagonal)
-        # __, JAC_DET = inv(J)
+        __, JAC_DET = inv(J)
 
-        JAC_DET = np.zeros((n_gqpts, 1));           # Determinants of Jacobians stored as a matrix, diagonal)
+        # JAC_DET = np.zeros((n_gqpts, 1));           # Determinants of Jacobians stored as a matrix, diagonal)
 
-        for i in np.arange(n_gqpts):
-            JAC_DET[i] = np.linalg.det(J[i, :, :])
+        # for i in np.arange(n_gqpts):
+        #     JAC_DET[i] = np.linalg.det(J[i, :, :])
 
-        JAC_DET = np.diag(np.squeeze(JAC_DET))
+        # JAC_DET = np.diag(np.squeeze(JAC_DET))
 
-        # JAC_DET = np.diag(JAC_DET)
+        JAC_DET = np.diag(JAC_DET)
 
         # This is basically the same as in the volume integral case, except that the jacobian determinants represent the transformation from a square in the x-y plane to an arbitrarily oriented square in R^3
         dF = PHI@W@JAC_DET@G_GQ     # This is the contribution to the total integral from this particular volume element

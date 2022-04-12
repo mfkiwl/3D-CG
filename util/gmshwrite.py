@@ -16,11 +16,16 @@ def gmshwrite(p, t, fname, f=None, elemnumbering='vol', facenumbering='individua
 
         # Writing the elements
         for i, row in enumerate(t+1):
-            if elemnumbering == 'vol':
-                file.write('{:d} 4 {:d} 4 {:d} {:d} {:d} {:d}\n'.format(i+1, 0, row[0], row[1], row[2], row[3]))
-            elif elemnumbering == 'individual':
-                file.write('{:d} 4 {:d} 4 {:d} {:d} {:d} {:d}\n'.format(i+1, i+1, row[0], row[1], row[2], row[3]))
+            if t.shape[1] == 4:     # Volume elements are tets (3D mesh)
+                if elemnumbering == 'vol':
+                    file.write('{:d} 4 {:d} 4 {:d} {:d} {:d} {:d}\n'.format(i+1, 0, row[0], row[1], row[2], row[3]))
+                elif elemnumbering == 'individual':
+                    file.write('{:d} 4 {:d} 4 {:d} {:d} {:d} {:d}\n'.format(i+1, i+1, row[0], row[1], row[2], row[3]))
 
+            elif t.shape[1] == 3:   # Volume elements are triangles (2D mesh)
+                file.write('{:d} 2 {:d} 3 {:d} {:d} {:d}\n'.format(i+1, 0, row[0], row[1], row[2]))
+            else:
+                raise ValueError('Mesh must be either triangles or tets')
 
         if f is not None:
             for i, row in enumerate(f):

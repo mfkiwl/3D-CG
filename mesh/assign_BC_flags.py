@@ -20,8 +20,7 @@ def assign_BC_flags(mesh):
 
     # Strategy: For each face: all nodes on the face need to be contained in one of the boundaries. We don't have to access the points or the connectivity matrix
     # Subtracting 1 to index the dimension of the face, not the volume element
-    nnodes_per_face = mesh['gmsh_mapping'][mesh['elemtype']
-                                           ]['nnodes'][mesh['ndim']-1]
+    nnodes_per_face = mesh['gmsh_mapping'][mesh['elemtype']]['nnodes'][mesh['ndim']-1]
     bdry_faces_start_idx = np.where(mesh['f'][:, -1] < 0)[0][0]
     t2f_bdry = np.zeros_like(mesh['t'])
 
