@@ -72,6 +72,11 @@ if 'surface_index' in config_dict:  # Allows for manual entry of the face index 
 else:
     surf_faces = np.arange(min(bdry)-1)+1         # Number of faces on aircraft body is implied from the value of the min face, which is assigned after the aircraft surfaces in the mesh generator script
 
+if 'surf_viz_labels' in config_dict:
+    surf_viz_labels = config_dict['surf_viz_labels']
+else:
+    surf_viz_labels = None
+
 logger = logger_cfg.initialize_logger(casename)
 logger.info('*************************** INITIALIZING SIM ' +str(datetime.datetime.now())+' ***************************')
 logger.info('Starting imports...')
@@ -140,7 +145,7 @@ try:
     logger.info('Call paraview when done y/n: ' +str(call_pv))
     logger.info('Visualization porder: ' + str(visorder))
     logger.info('Visualization filename: ' + vis_filename + '.vtu')
-    logger.info('Visualization labels: ' + str(viz_labels))
+    logger.info('Volume Visualization labels: ' + str(viz_labels))
     logger.info('Mesh file: '+meshfile)
 
     if compute_sol:
@@ -203,5 +208,11 @@ try:
 
     logger.info('Generating .VTU file of solution...')
     viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol, vectors=grad)
+
+    if surf_viz_labels is not None:
+        logger.info('Visualizing aircraft surface')
+        viz.visualize_surface_field(mesh, master, np.array([1, 2, 3, 4, 5, 6]), 'pg', sol[:,None], visorder, surf_viz_labels, vis_filename+'_surface', call_pv)
+
+
 except Exception as e:
     logger.exception('message')

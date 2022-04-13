@@ -21,13 +21,14 @@ def mkmesh_square(porder, ndim, meshfile):
 
     mesh['f'], mesh['t2f'] = mkt2f(mesh['t'], 2)
     
-    mesh['plocal'], mesh['tlocal'], _, _, _, _ = masternodes(porder, 2)
+    mesh['plocal'], mesh['tlocal'], _, _, _, _, _ = masternodes(porder, 2)
 
     # set boundary numbers
     mesh = assign_BC_flags(mesh)
 
     # create dg nodes
-    mesh['dgnodes'] = create_dg_nodes(mesh, 2)
+    mesh['dgnodes'] = create_dg_nodes(mesh, 2)[:,:,:-1]     # Indexing added because plocal in 2D returns points in 3D so we must chop off the z component
+    # Note that it's okay to leave the DG nodes as 3D (as opposed to stripping off the constant z-coordinate) because the z points are not accessed when forming the elemental matrices (see elemmat_cg.py)
 
     # with shelve.open('unstr_square_mesh_save') as shelf:
     #     shelf['mesh'] = mesh        # It is ok to save in a shelf instead of a .npy because the data structure is a dictionary

@@ -39,8 +39,9 @@ def test_3d_cube_sine_neumann(porder, meshfile, solver):
     build_mesh = True
     vis_filename = 'cube_sol'
     ndim = 3
-    call_pv = True
-    surf_viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
+    call_pv = False
+    viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
+    surf_viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {}}
     visorder = porder*2
     solver_tol=1e-10
     
@@ -123,10 +124,14 @@ def test_3d_cube_sine_neumann(porder, meshfile, solver):
 
     # ########## VISUALIZE SOLUTION ##########
     # Might have to tweak dimensions based on how the viz functions in the HPC version handle it
-    # viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad[None,:,:])
+    logger.info('Running visualization')
+    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad[None,:,:])
 
-    print('Visualizing extracted surface')
-    surf_viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {}}
-    viz.visualize_surface_field(mesh, master, np.array([1, 2, 3, 4, 5, 6]), 'pg', sol[:,None], visorder, surf_viz_labels, vis_filename+'_surface', call_pv)
+    import gmshwrite
+    gmshwrite.gmshwrite(mesh['p'], mesh['t'], 'base_mesh_test', mesh['f'], elemnumbering='individual')
+
+    # logger.info('Visualizing extracted surface')
+    # viz.visualize_surface_field(mesh, master, np.array([50]), 'face', sol[:,None], visorder, surf_viz_labels, vis_filename+'_surface', call_pv)
+    # viz.visualize_surface_field(mesh, master, np.array([1, 2, 3, 4, 5, 6]), 'pg', sol[:,None], visorder, surf_viz_labels, vis_filename+'_surface', call_pv)
 
     return norm_error

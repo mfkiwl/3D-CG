@@ -19,6 +19,7 @@ import logging
 import logging.config
 import helper
 import domain_helper_fcns
+import gmshwrite
 
 def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
 
@@ -122,8 +123,11 @@ def test_3d_cube_sine_homoegeneous_dirichlet(porder, meshfile, solver):
     logger.info('Wrote solution to /out')
 
     # ########## VISUALIZE SOLUTION ##########
+    logger.info('Writing base mesh to file')
+    gmshwrite.gmshwrite(mesh['p'], mesh['t'], outdir+'base_mesh', None, elemnumbering='individual', facenumbering='individual')
+
     # Might have to tweak dimensions based on how the viz functions in the HPC version handle it
-    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad[None,:,:])
+    viz.visualize(mesh, visorder*2, viz_labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad[None,:,:])
 
     # Old version of viz scripts
     # logger.info('Calculating derivatives')
