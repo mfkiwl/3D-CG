@@ -29,8 +29,11 @@ def gmshwrite(p, t, fname, f=None, elemnumbering='vol', facenumbering='individua
 
         if f is not None:
             for i, row in enumerate(f):
-                if row[-1]<0 and not facenumbering=='individual': # boundary face
-                    file.write('{:d} 2 {:d} 3 {:d} {:d} {:d}\n'.format(t.shape[0]+i+1, -row[-1], row[0]+1, row[1]+1, row[2]+1))
-                else:
+                if facenumbering=='individual':
                     file.write('{:d} 2 {:d} 3 {:d} {:d} {:d}\n'.format(t.shape[0]+i+1, i+1, row[0]+1, row[1]+1, row[2]+1))                
+                elif facenumbering=='group':
+                    if row[-1]<0: # boundary face
+                        file.write('{:d} 2 {:d} 3 {:d} {:d} {:d}\n'.format(t.shape[0]+i+1, -row[-1], row[0]+1, row[1]+1, row[2]+1))
+                    else:
+                        file.write('{:d} 2 {:d} 3 {:d} {:d} {:d}\n'.format(t.shape[0]+i+1, 0, row[0]+1, row[1]+1, row[2]+1))                
         file.write('$EndElements')

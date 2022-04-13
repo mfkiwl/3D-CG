@@ -16,7 +16,8 @@ def mkmaster(mesh, ndim, pgauss=None):
         # Instantiates master data structure and copies the polynomial order and local DG points over to the master structure
         master = {}
         master['porder'] = mesh['porder']
-        master['plocvol'], master['tlocvol'], master['plocface'], master['tlocface'], _, master['perm'] = masternodes(master['porder'], ndim)
+        master['plocvol'], master['tlocvol'], master['plocface'], master['tlocface'], master['corner'], master['perm'], _ = masternodes(master['porder'], ndim)
+        master['plocvol'] = master['plocvol'][:,:-1]
 
         master['gptsface'], master['gwface'] = gaussquad1d(pgauss)
         master['gptsvol'], master['gwvol'] = gaussquad2d(pgauss)
@@ -40,7 +41,7 @@ def mkmaster(mesh, ndim, pgauss=None):
         # Instantiates master data structure and copies the polynomial order and local DG points over to the master structure
         master = {}
         master['porder'] = mesh['porder']
-        master['plocvol'], master['tlocvol'], master['plocface'], master['tlocface'], _, _, master['perm'] = masternodes(master['porder'], ndim)
+        master['plocvol'], master['tlocvol'], master['plocface'], master['tlocface'], master['corner'], _, master['perm'] = masternodes(master['porder'], ndim)
 
         master['gptsface'], master['gwface'] = gaussquad2d(pgauss)
         master['gptsvol'], master['gwvol'] = gaussquad3d(pgauss)

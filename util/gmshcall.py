@@ -197,7 +197,7 @@ def gmshcall(filename, ndim, elemtype, elemtype_face=None):
             if col_idx[0].shape[0] != 0:     # If the surface is planar
                 col_idx = col_idx[0][0]
                 bdry_surf_idx[col_idx].append([pts[0, col_idx], phys_grp_dict[key]['idx']])
-        
+
         for axis in bdry_surf_idx:
             axis_pts = np.asarray(bdry_surf_idx[axis]).T
             sort_idx = np.argsort(axis_pts[0, :])

@@ -10,7 +10,7 @@ for dirname in tuple(cwd.parents):
 sys.path.append(str(sim_root_dir.joinpath('util')))
 import gmshwrite
 
-def cgmesh(mesh, t_linear=None, master=None, case='volume_mesh', field=None):
+def cgmesh(mesh, t_linear=None, master=None, case='volume_mesh', field=None, type=None):
     """
     Steps:
     - Reshape ph to a ndgnodesx2 array of all the coordinates of the dgnodes, including duplicate points on the faces
@@ -27,7 +27,11 @@ def cgmesh(mesh, t_linear=None, master=None, case='volume_mesh', field=None):
 
         ndim = mesh['ndim']
         ph = np.transpose(mesh['dgnodes'], (2, 1, 0))
-        ph = np.ravel(ph, order='F').reshape((-1, ndim))    # ndim accounts for 3D as well
+        if type == 'surface_mesh':
+            ph = np.ravel(ph, order='F').reshape((-1, mesh['p'].shape[1]))
+        else:
+            ph = np.ravel(ph, order='F').reshape((-1, ndim))
+
 
         _, unique_idx, inverse_idx = np.unique(np.round(ph, 6), axis=0, return_index=True, return_inverse=True)
         ph_unique = ph[unique_idx,:]    # This is what caused for big trouble when I used the output of np.unique directly - the points had been rounded

@@ -40,7 +40,7 @@ def single_tet(porder):
     # Writing local mesh to file
     flocal, _ = mkt2f_new(mesh['tlocal'], 3)
     gmshwrite.gmshwrite(mesh['plocal'], mesh['tlocal'], 'local_mesh', flocal[flocal[:, -1] < 0, :], 'individual')
-    gmshwrite.gmshwrite(mesh['p'], mesh['t'], 'mesh', mesh['f'][mesh['f'][:, -1] < 0, :], 'individual')
+    gmshwrite.gmshwrite(mesh['p'], mesh['t'], 'total_linear_mesh', mesh['f'][mesh['f'][:, -1] < 0, :], 'individual')
 
     viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
     viz.visualize(mesh, mesh['porder'], viz_labels, 'vis_tet', call_pv, scalars=mesh['pcg'][:,0][:,None])

@@ -63,7 +63,7 @@ def generate_vtu(p, t, scalars, vectors, labels, viz_filename, call_pv):
     else:
         logger.info('Wrote .vtu to ' + fname +', done...')
 
-def visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=None, vectors=None):
+def visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=None, vectors=None, type=None):
     if visorder > mesh['porder']:
         # Change to a single line
         ho_viz_mesh = {}
@@ -72,11 +72,10 @@ def visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=None, vecto
         ho_viz_mesh['t'] = mesh['t']
         ho_viz_mesh['porder'] = visorder    # This is the one change from the base mesh
 
-        ho_viz_mesh['plocal'], ho_viz_mesh['tlocal'], __, __, __, __ = masternodes.masternodes(ho_viz_mesh['porder'], mesh['ndim'])
+        ho_viz_mesh['plocal'], ho_viz_mesh['tlocal'], __, __, __, __, __ = masternodes.masternodes(ho_viz_mesh['porder'], mesh['ndim'])
     
         ho_viz_mesh['dgnodes'] = create_dg_nodes.create_dg_nodes(ho_viz_mesh, mesh['ndim'])
-
-        ho_viz_mesh = cgmesh.cgmesh(ho_viz_mesh)
+        ho_viz_mesh = cgmesh.cgmesh(ho_viz_mesh, type=type)
 
         # Reshape solution from column vector into high order array
         if scalars is not None:
@@ -92,7 +91,7 @@ def visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=None, vecto
             vectors = helper.reshape_field(ho_viz_mesh, vectors, 'to_column', 'vectors')
 
         viz_mesh = create_linear_cg_mesh.create_linear_cg_mesh(ho_viz_mesh)    # update
-        
+
     elif visorder == mesh['porder']:
         viz_mesh = create_linear_cg_mesh.create_linear_cg_mesh(mesh)
 
@@ -103,9 +102,11 @@ def visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=None, vecto
 
     if viz_mesh['ndim'] == 3:
         f,__ = mkt2f_new(viz_mesh['t_linear'], 3)
-        gmshwrite.gmshwrite(viz_mesh['pcg'], viz_mesh['t_linear'], 'mesh_linear', f[f[:, -1] < 0, :])
+        gmshwrite.gmshwrite(viz_mesh['pcg'], viz_mesh['t_linear'], vis_filename+'_vizmesh_linear', f[f[:, -1] < 0, :], elemnumbering='individual')
+        logger.info('Wrote linear mesh')
     else:
-        gmshwrite.gmshwrite(viz_mesh['pcg'], viz_mesh['t_linear'], vis_filename+'_mesh_linear')
+        gmshwrite.gmshwrite(viz_mesh['pcg'], viz_mesh['t_linear'], vis_filename+'_vizmesh_linear')
+        logger.info('Wrote linear mesh')
 
     logger.info('Wrote linear mesh out to ' + vis_filename+'_mesh_linear')
 
@@ -138,9 +139,9 @@ def visualize_surface_field(mesh, master, face_groups, case, field, visorder, la
     mesh_face, face_scalars = cgmesh.cgmesh(mesh, faces, master, case='surface_mesh', field=field)
     mesh_face['porder'] = mesh['porder']
     mesh_face['ndim'] = mesh['ndim'] - 1
-    mesh_face['plocal'], mesh_face['tlocal'], _, _, _, _ = masternodes.masternodes(mesh_face['porder'], mesh_face['ndim'])
+    mesh_face['plocal'], mesh_face['tlocal'], _, _, __, _, _ = masternodes.masternodes(mesh_face['porder'], mesh_face['ndim'])
 
-    visualize(mesh_face, visorder, labels, vis_fname, call_pv, face_scalars) # Can only have scalars on a surface mesh
+    visualize(mesh_face, visorder, labels, vis_fname, call_pv, face_scalars, None, type='surface_mesh') # Can only have scalars on a surface mesh
 
     return
 

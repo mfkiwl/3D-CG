@@ -70,6 +70,8 @@ def interpolate_high_order(porder_lo, porder_hi, ndim, lo_scalars=None, lo_vecto
     if ndim == 3:
         shap_ho = shap.shape3d(porder_lo, ploc_lo, ploc_hi)[:,:,0]  # Only need the values of the basis functions
     elif ndim == 2:
+        ploc_lo = ploc_lo[:,:-1]     # Indexing added because plocal in 2D returns points in 3D so we must chop off the z component
+        ploc_hi = ploc_hi[:,:-1]     # Indexing added because plocal in 2D returns points in 3D so we must chop off the z component
         shap_ho = shap.shape2d(porder_lo, ploc_lo, ploc_hi)[:,:,0]  # Only need the values of the basis functions
     else:
         raise NotImplementedError('dim not in [2, 3] not implemented')

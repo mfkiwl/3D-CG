@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.misc import face
 
 # TODO: extend to account for elements with curved faces and a different porder on the faces (morder)
 
@@ -62,8 +63,9 @@ def masternodes(porder, ndim):
             
             # Since the parametric coordinates have served their purpose, remove them (the first column) of the local point matrices while returning
             plocal = plocal[:,1:]
+            plocal = np.concatenate((plocal, np.zeros((plocal.shape[0], 1))), axis=1)
 
-        return plocal, tlocal, plocface, tlocface, permnodes, permedge
+        return plocal, tlocal, plocface, tlocface, permnodes, permedge, None
 
 
     elif ndim == 3:
@@ -114,59 +116,127 @@ def masternodes(porder, ndim):
 
                         # Strategy: divide the master element into sub-cubes and iterate through each one by row. For each row of sub-cubes, there will be two partial cubes at the end - one having 5 tets and the other having only 1. These are represented below
                         # This can be easily tested by making a 8-point mesh with a single cube and then building the connectivity matrix like the indexing here.
-                        if i == ys-2:
-                            # 
-                            tloclist.append(np.array([bxpt1, bxpt2, bxpt3, bxpt5])+offset)
-                        elif i == ys-3:
-                            tloclist.append(np.array([bxpt1, bxpt4, bxpt3, bxpt5])+offset)
-                            tloclist.append(np.array([bxpt1, bxpt2, bxpt4, bxpt5])+offset)
-                            tloclist.append(np.array([bxpt2, bxpt6, bxpt4, bxpt5])+offset)
-                            tloclist.append(np.array([bxpt3, bxpt4, bxpt7, bxpt5])+offset)
-                            tloclist.append(np.array([bxpt7, bxpt6, bxpt5, bxpt4])+offset)
-                        else:
-                            # From this stackexchage post: https://puzzling.stackexchange.com/questions/12838/partition-a-cube-into-6-congruent-tetrahedra
-                            tloclist.append(np.array([bxpt1, bxpt4, bxpt3, bxpt5])+offset)
-                            tloclist.append(np.array([bxpt1, bxpt2, bxpt4, bxpt5])+offset)
-                            tloclist.append(np.array([bxpt2, bxpt6, bxpt4, bxpt5])+offset)
-                            tloclist.append(np.array([bxpt3, bxpt4, bxpt7, bxpt5])+offset)
-                            tloclist.append(np.array([bxpt4, bxpt8, bxpt7, bxpt5])+offset)
-                            tloclist.append(np.array([bxpt4, bxpt8, bxpt5, bxpt6])+offset)
+                        
+                        tloclist.append(np.array([bxpt1, bxpt2, bxpt3, bxpt5])+offset)
+                        
+                        if i < ys-2:
+                            tloclist.append(np.array([bxpt3, bxpt2, bxpt4, bxpt5])+offset)
+                            tloclist.append(np.array([bxpt5, bxpt2, bxpt4, bxpt6])+offset)
+                            tloclist.append(np.array([bxpt4, bxpt3, bxpt5, bxpt7])+offset)
+                            tloclist.append(np.array([bxpt5, bxpt7, bxpt6, bxpt4])+offset)
+
+                            if i < ys-3:
+                                tloclist.append(np.array([bxpt6, bxpt7, bxpt8, bxpt4])+offset)
 
                     y_layer_offset += ys
                 z_layer_offset += npl
 
             tlocal = np.asarray(tloclist)
 
-            plocface, tlocface,_,_,_,_ = masternodes(porder, ndim-1)
+            plocface, tlocface,_,_,_,_,_ = masternodes(porder, 2)
 
-            vertex_list = []
-            permedge = []
+            permface = []
+
+            p1 = np.array([0, 0, 0])
+            p2 = np.array([1, 0, 0])
+            p3 = np.array([0, 1, 0])
+            p4 = np.array([0, 0, 1])
+            p = np.array([p1, p2, p3, p4]).astype(np.float)
+            face_vectors = np.array([[p4-p2,p3-p2,np.cross(p4-p2,p3-p2)],
+                                    [p4-p3,p1-p3,np.cross(p4-p3,p1-p3)],
+                                    [p4-p1,p2-p1,np.cross(p4-p1,p2-p1)],
+                                    [p2-p1,p3-p1,np.cross(p2-p1,p3-p1)]])
+
+            p0_vec = np.array([p2, p3, p1, p1])
+
+            permface = np.zeros((plocface.shape[0], 4)).astype(np.int)  # 4 is the number of faces in a tet, no use in using a variable to set it because the code can only handle tets
+
             for i, col in enumerate(plocal.T):
-                vertex_list.append(np.where(np.isclose(col,1))[0][0])
-                
-                # For each column in pl3d, we need to pull out the points that have zeros in them. For points in the same column, they will lie on the same face.
-                iface_node_idx = np.where(np.isclose(col, 0))[0]
-                permedge.append(iface_node_idx)
+                iface_node_idx = np.where(np.isclose(col, 0))[0]    # list of points on ith face
+                pts_on_face = plocal[iface_node_idx,1:]     # 1-indexing because the first column still has the parametric coord index tacked on
 
-            permnodes = np.asarray(vertex_list)
-            permface = np.asarray(permedge).T
+                # Affine transformation matrix - in regular form Ap = r
+                A = face_vectors[i,:,:]
 
-            permedge = np.zeros((porder+1, 6))
-                        # 1->2 1->3 1->4 2->3       3->4                            4->2
-            permedge[0,:] = [0, 0, 0, porder, int((porder+1)*(porder+2)/2-1), int((porder+1)*(porder+2)*(porder+3)/6-1)]
-            for i in np.arange(1, porder+1):
-                permedge[i, 0] = i      # 1->2
-                permedge[i, 1] = permedge[i-1, 1] + porder+2-i      # 1->3
-                permedge[i, 2] = permedge[i-1, 2] + int((porder+2-i)*(porder+3-i)/2)        # 1->4
-                permedge[i, 3] = permedge[i-1, 3] + porder+1-i      # 2->3
-                permedge[i, 4] = permedge[i-1, 4] + int((porder+1-i)*(porder+2-i)/2)           # 3->4
-                permedge[i, 5] = permedge[i-1, 5] - int(i*(i+1)/2) - i+2           # 4->2
+                plf_transformed = np.around((pts_on_face -p0_vec[i,:])@np.linalg.inv(A), decimals=6)
+                plocface_rounded = np.around(plocface, decimals=6)
+
+                found_idx = np.zeros([plocface_rounded.shape[0]]).astype(np.int)
+                # Loop through each point and find which index it corresponds to in the master
+                for iloc_pt, loc_pt in enumerate(plocface_rounded):
+                    found_idx[iloc_pt] = np.where(np.all(plf_transformed == loc_pt[None,:], axis=1))[0][0]
+
+                # Convert back to the global index - index perm into iface_node_idx
+                permface[:,i] = iface_node_idx[found_idx]
+
+            plocal = plocal[:,1:]
+            plocal_rounded = np.around(plocal, decimals=6)
+   
+            permnodes = np.zeros((4)).astype(np.int32)
+            for ivertex, _ in enumerate(permnodes):
+                # print(permnodes[ivertex])
+                permnodes[ivertex] = np.where(np.all(plocal_rounded==p[ivertex,:][None,:], axis=1))[0][0]
 
             # Since the parametric coordinates have served their purpose, remove them (the first column) of the local point matrices while returning
-            plocal = plocal[:, 1:]
+            plocal = plocal
+            plocface = plocface[:,:-1]
 
-    return plocal, tlocal, plocface, tlocface, permnodes, permedge, permface
+    return plocal, tlocal, plocface, tlocface, permnodes, None, permface
 
 
 if __name__ == '__main__':
-    mkmshlocal(porder=3)
+
+    porder = 3
+    dim=3
+    plocal, tlocal, plocface, tlocface, corner, permedge, perm = masternodes(porder, dim)
+
+    print('porder')
+    print(porder)
+    print('dim')
+    print(dim)
+    print('plocal')
+    print(plocal)
+    print()
+    print('tlocal')
+    print(tlocal)
+    print()
+    print('plocface')
+    print(plocface)
+    print()
+    print('tlocface')
+    print(tlocface)
+    print()
+    print('corner')
+    print(corner)
+    print()
+    print('permedge')
+    print(permedge)
+    print()
+    print('perm')
+    print(perm)
+    print()
+
+    exit()
+
+    f_idx_template = np.array([[1, 3, 2],    # Nodes on face 0
+                               [2, 3, 0],      # Nodes on face 1
+                               [0, 3, 1],      # Nodes on face 2
+                               [0, 1, 2]])     # Nodes on face 3
+
+    # print(f_idx_template+1)
+
+
+    plocal, tlocal, plocface, tlocface, corner3d, _, perm = masternodes(porder, 3)
+
+    _, _, _, _, corner2d, _, _ = masternodes(porder, 2)
+
+
+    for i in [0, 1, 2, 3]:
+        print(i)
+        a = plocal[corner3d,:][f_idx_template[i,:]]
+        b = plocal[perm[:,i][corner2d],:]
+        print(a)
+        print()
+        print(b)
+        print(np.all(a==b))
+        print()
