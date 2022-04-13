@@ -19,6 +19,7 @@ import quadrature
 import mkmesh_tet
 import gmshwrite
 from mkf_parallel2 import mkt2f_new
+import normals
 
 def single_tet(porder):
     # Test case for a single tetrahedron
@@ -26,6 +27,29 @@ def single_tet(porder):
     ndof_vol = mesh['plocal'].shape[0]
     ndof_face = master['perm'].shape[0]
     call_pv = False
+
+    bdry_faces = mesh['f'][mesh['f'][:, -1] < 0, :]
+    bdry_faces_start_idx = np.where(mesh['f'][:, -1] < 0)[0][0]
+
+    # Single out only nonzero entries in sparse matrix for dirichlet BC
+    nnodes_per_face = 3
+
+
+    for bdry_face_num, face in enumerate(bdry_faces):
+        facenum = bdry_face_num + bdry_faces_start_idx + 1      # t2f uses 1-indexing for the faces
+        bdry_elem = face[nnodes_per_face]
+
+        # Collect nodes of faces on boundary ONLY
+        # Find the index that the face is in in t2f
+        loc_face_idx = np.where(mesh['t2f'][bdry_elem, :] == facenum)[0][0]     #try np.abs here?
+
+        # Pull the local nodes on that face from permface - we don't want to include all the nodes in the element
+
+        n = quadrature.get_elem_face_normals(mesh['dgnodes'][bdry_elem,:,:], master, mesh['ndim'], loc_face_idx)
+        print(n)
+        print()
+
+        # exit()
 
     # np.set_printoptions(suppress=True, linewidth=np.inf, precision=10)
 
@@ -38,12 +62,12 @@ def single_tet(porder):
     error = np.linalg.norm(np.array([surf_int, vol_int])-np.array([0.5, 0.16666666666666666]))
 
     # Writing local mesh to file
-    flocal, _ = mkt2f_new(mesh['tlocal'], 3)
-    gmshwrite.gmshwrite(mesh['plocal'], mesh['tlocal'], 'local_mesh', flocal[flocal[:, -1] < 0, :], 'individual')
-    gmshwrite.gmshwrite(mesh['p'], mesh['t'], 'total_linear_mesh', mesh['f'][mesh['f'][:, -1] < 0, :], 'individual')
+    # flocal, _ = mkt2f_new(mesh['tlocal'], 3)
+    # gmshwrite.gmshwrite(mesh['plocal'], mesh['tlocal'], 'local_mesh', flocal[flocal[:, -1] < 0, :], 'individual')
+    # gmshwrite.gmshwrite(mesh['p'], mesh['t'], 'total_linear_mesh', mesh['f'][mesh['f'][:, -1] < 0, :], 'individual')
 
-    viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
-    viz.visualize(mesh, mesh['porder'], viz_labels, 'vis_tet', call_pv, scalars=mesh['pcg'][:,0][:,None])
+    # viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
+    # viz.visualize(mesh, mesh['porder'], viz_labels, 'vis_tet', call_pv, scalars=mesh['pcg'][:,0][:,None])
     return error
 
 if __name__ == '__main__':

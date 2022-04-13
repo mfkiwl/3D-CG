@@ -320,5 +320,14 @@ class DirichletModSineTests(unittest.TestCase):
         self.assertAlmostEqual(cube_sine_dirichlet.main.test_3d_cube_sine_dirichlet(3, 'cube4591', 'gmres'), 0.00016782867764086884, places=10)
         os.chdir('../')
 
+class MasternodesPermTest(unittest.TestCase):
+    def test_masternodes_perm_porder3(self):
+        import masternodes_test
+        self.assertTrue(masternodes_test.masternodes_perm_test(3))
+
+    def test_masternodes_perm_porder2(self):
+        import masternodes_test
+        self.assertTrue(masternodes_test.masternodes_perm_test(2))
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

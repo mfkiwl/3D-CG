@@ -22,9 +22,9 @@ def mkmesh_tet(porder, sol_axis=None):
     mesh['ndim'] = 3
     mesh['porder'] = porder
     # mesh['cgmesh'] = cgmesh.cgmesh(mesh)
-    mesh['p'] = np.array([[0, 1, 0],
-                        [0, 0, 0],
+    mesh['p'] = np.array([[0, 0, 0],
                         [1, 0, 0],
+                        [0, 1, 0],
                         [0, 0, 1]])
 
     mesh['t'] = np.array([0, 1, 2, 3])[None,:]

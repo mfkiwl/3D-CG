@@ -24,6 +24,7 @@ def mkmaster(mesh, ndim, pgauss=None):
 
         master['shapface'] = shape1d(master['porder'], master['plocface'], master['gptsface'])
         master['shapvol'] = shape2d(master['porder'], master['plocvol'], master['gptsvol'])
+        master['shapvol_nodal'] = shape2d(master['porder'], master['plocvol'], master['plocvol'])   # Useful for computing normal vectors and gradients
 
         # Generate mass matrices - note the order of the transpose differs from the matlab script because of the C vs Fortran ordering
         master['massface'] = master['shapface'][:,:,0].T@np.diag(master['gwface'])@master['shapface'][:,:,0]

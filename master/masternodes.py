@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.misc import face
 
 # TODO: extend to account for elements with curved faces and a different porder on the faces (morder)
 
@@ -190,42 +189,51 @@ if __name__ == '__main__':
     dim=3
     plocal, tlocal, plocface, tlocface, corner, permedge, perm = masternodes(porder, dim)
 
-    print('porder')
-    print(porder)
-    print('dim')
-    print(dim)
-    print('plocal')
-    print(plocal)
-    print()
-    print('tlocal')
-    print(tlocal)
-    print()
-    print('plocface')
-    print(plocface)
-    print()
-    print('tlocface')
-    print(tlocface)
-    print()
-    print('corner')
-    print(corner)
-    print()
-    print('permedge')
-    print(permedge)
-    print()
-    print('perm')
-    print(perm)
-    print()
+    # print('porder')
+    # print(porder)
+    # print('dim')
+    # print(dim)
+    # print('plocal')
+    # print(plocal)
+    # print()
+    # print('tlocal')
+    # print(tlocal)
+    # print()
+    # print('plocface')
+    # print(plocface)
+    # print()
+    # print('tlocface')
+    # print(tlocface)
+    # print()
+    # print('corner')
+    # print(corner)
+    # print()
+    # print('permedge')
+    # print(permedge)
+    # print()
+    # print('perm')
+    # print(perm)
+    # print()
 
-    exit()
+    # exit()
 
     f_idx_template = np.array([[1, 3, 2],    # Nodes on face 0
                                [2, 3, 0],      # Nodes on face 1
                                [0, 3, 1],      # Nodes on face 2
                                [0, 1, 2]])     # Nodes on face 3
 
+    # This prints the nodes on the corners of each of the faces, indexed as they would be in mesh.f
+    faces = corner[f_idx_template]
+
+    for face in faces:
+        print()
+        print(plocal[face,:])
+    exit()
+
     # print(f_idx_template+1)
 
-
+    porder = 3
+    dim=3
     plocal, tlocal, plocface, tlocface, corner3d, _, perm = masternodes(porder, 3)
 
     _, _, _, _, corner2d, _, _ = masternodes(porder, 2)

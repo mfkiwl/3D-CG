@@ -1,3 +1,4 @@
+from inspect import CO_ASYNC_GENERATOR
 import numpy as np
 import logging
 logger = logging.getLogger(__name__)
@@ -14,6 +15,7 @@ sys.path.append(str(sim_root_dir.joinpath('util')))
 from math_helper_fcns import inv
 import multiprocessing as mp
 from functools import partial
+import shap
 
 def elem_surface_integral(ho_pts, master, field, ndim, returnType='scalar'):
     if ndim == 2:
@@ -92,13 +94,6 @@ def elem_volume_integral(ho_pts, master, field, ndim):
         # Determinants of Jacobians stored as a matrix, diagonal)
         __, JAC_DET = inv(J)
 
-        # JAC_DET = np.zeros((n_gqpts, 1));           # Determinants of Jacobians stored as a matrix, diagonal)
-
-        # for i in np.arange(n_gqpts):
-        #     JAC_DET[i] = np.linalg.det(J[i, :, :])
-
-        # JAC_DET = np.diag(np.squeeze(JAC_DET))
-
         JAC_DET = np.diag(JAC_DET)
 
         # This is basically the same as in the volume integral case, except that the jacobian determinants represent the transformation from a square in the x-y plane to an arbitrarily oriented square in R^3
@@ -116,14 +111,6 @@ def surface_integral_serial(mesh, master, scalar_field, faces, nnodes_per_face):
         # print(face)
         facenum = face[0]      # t2f uses 1-indexing for the faces
         bdry_elem = face[nnodes_per_face+1] # Adding 1 because we put the global face index in the first column and moved the rest over
-        # print(bdry_elem)
-        # Collect nodes of faces on boundary ONLY
-        # Find the index that the face is in in t2f
-        # print(mesh['t2f'][bdry_elem, :])
-        # print(mesh['t2f'][bdry_elem+1, :])
-        # print(mesh['t2f'][bdry_elem-1, :])
-        # print(facenum)
-        # exit()
 
         loc_face_idx = np.where(mesh['t2f'][bdry_elem, :] == facenum)[0][0]
         # Pull the local nodes on that face from permface - we don't want to include all the nodes in the element
@@ -184,3 +171,42 @@ def volume_integral(mesh, master, scalar_field, elements):
         integral_qty += elem_volume_integral(dgpts, master, field_vals, mesh['ndim'])
 
     return integral_qty
+
+def get_elem_face_normals(dgnodes, master, ndim, face_idx):
+
+    """
+    dgnodes are the high order nodes on the face on which to calculate the normals
+
+    loc_pts can be either the local nodes or GQ pts
+    """
+
+    if ndim == 2:
+        raise NotImplementedError('2D not implemented yet')
+
+    elif ndim == 3:
+        # First, prepare data structures to build PHI, DX, and DY, DETJ, and other matrices:
+        face_nodes_loc_idx = master['perm'][:, face_idx]
+
+        # local_normal_pts could be any local points, but most likely the nodal or GQ pts. If they are at the GQ pts, this is the same as master['shapv'], but this can't be assumed so we need to remake it.
+
+        # Refer to masternodes for the way the faces are indexed - this has to match up with the way the faces are indexed in mesh.f
+        if face_idx == 0:   
+            GRAD_XI = (master['shapvol_nodal'][:, :, 1]@dgnodes)[face_nodes_loc_idx,:]
+            GRAD_ETA = (master['shapvol_nodal'][:, :, 2]@dgnodes)[face_nodes_loc_idx,:]
+            GRAD_GAMMA = (master['shapvol_nodal'][:, :, 3]@dgnodes)[face_nodes_loc_idx,:]
+            n = (GRAD_XI + GRAD_ETA + GRAD_GAMMA) / np.linalg.norm(GRAD_XI + GRAD_ETA + GRAD_GAMMA, axis=1)[:,None]
+
+        elif face_idx == 1:
+            GRAD_XI = (master['shapvol_nodal'][:, :, 1]@dgnodes)[face_nodes_loc_idx,:]
+            n = -GRAD_XI/np.linalg.norm(GRAD_XI, axis=1)[:,None]
+
+        elif face_idx == 2:
+            GRAD_ETA = (master['shapvol_nodal'][:, :, 2]@dgnodes)[face_nodes_loc_idx,:]
+            n = -GRAD_ETA/np.linalg.norm(GRAD_ETA, axis=1)[:,None]
+
+        elif face_idx == 3:
+            GRAD_GAMMA = (master['shapvol_nodal'][:, :, 3]@dgnodes)[face_nodes_loc_idx,:]
+            n = -GRAD_GAMMA/np.linalg.norm(GRAD_GAMMA, axis=1)[:,None]
+
+    # Returns a nloc_ptsx3 array of the normal vectors on the given face
+    return n
