@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+import numpy as np
 
 from py import process
 
@@ -65,17 +66,16 @@ else:
     d_fuselage_msh= np.linalg.norm(np.asarray(fuselage_pts[0])-np.asarray(fuselage_pts[1]))
     scale_factor = fuselage_dia/d_fuselage_msh    # Normalize mesh by the fuselage radius and rescale so that mesh dimensions are in meters
 
+bdry = (x_minus_face, x_plus_face, y_minus_face, y_plus_face, z_minus_face, z_plus_face)
 if 'surface_index' in config_dict:  # Allows for manual entry of the face index of the aircraft surface instead of automatically calculating it from the boundary fields
-    surf_faces = config_dict['surface_index']
+    surf_faces = np.array([config_dict['surface_index']]).astype(np.int32)
 else:
-    bdry = (x_minus_face, x_plus_face, y_minus_face, y_plus_face, z_minus_face, z_plus_face)
     surf_faces = np.arange(min(bdry)-1)+1         # Number of faces on aircraft body is implied from the value of the min face, which is assigned after the aircraft surfaces in the mesh generator script
 
 logger = logger_cfg.initialize_logger(casename)
 logger.info('*************************** INITIALIZING SIM ' +str(datetime.datetime.now())+' ***************************')
 logger.info('Starting imports...')
 
-import numpy as np
 import viz
 from cgmesh import cgmesh
 import mkmesh_cube

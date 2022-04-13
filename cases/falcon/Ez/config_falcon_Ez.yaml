@@ -1,7 +1,7 @@
 ########## TOP LEVEL SIM SETUP ##########
-casename: boeing_430K_Ey
-meshfile: '../mesh/boeing_plane_final_coarse'     # No file extension
-case_select: 'Ey'
+casename: falcon_Ez
+meshfile: '../mesh/falconfine'     # No file extension
+case_select: 'Ez'
 
 ########## SOLVER PARAMS ##########
 outdir: 'out/'
@@ -23,19 +23,16 @@ viz_labels:
         0: Potential Gradient
 
 ########## GEOMETRY SETUP ##########
-fuselage_dia: 3.76     # This is the fuselage diameter of the 737 in m
-
-fuselage_pts: 
-    0: [8547.42, 1505.00, 5678.37]
-    1: [8547.42, -1505.00, 5678.37]
+scale_factor: 1.0 
 
 ########## BOX SURFACE INDICES ##########
-x_minus_face_index: 138
-x_plus_face_index: 139
-y_minus_face_index: 140
-y_plus_face_index: 141
-z_minus_face_index: 142
-z_plus_face_index: 143
+x_minus_face_index: 1
+x_plus_face_index: 2
+y_minus_face_index: 3
+y_plus_face_index: 4
+z_minus_face_index: 5
+z_plus_face_index: 6
+surface_index: 7
 
 ########## PHYSICS PARAM ##########
 phys_param:

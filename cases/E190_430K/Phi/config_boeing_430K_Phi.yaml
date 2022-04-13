@@ -1,7 +1,7 @@
 ########## TOP LEVEL SIM SETUP ##########
-casename: boeing_6M_Ez
-meshfile: '../mesh/boeing_plane_final'     # No file extension
-case_select: 'Ez'
+casename: E190_430K_Phi
+meshfile: '../mesh/boeing_plane_final_coarse'     # No file extension
+case_select: 'Phi'
 
 ########## SOLVER PARAMS ##########
 outdir: 'out/'
@@ -23,7 +23,7 @@ viz_labels:
         0: Potential Gradient
 
 ########## GEOMETRY SETUP ##########
-fuselage_dia: 3.76     # This is the fuselage diameter of the 737 in m
+fuselage_dia: 3.01     # This is the diameter of the fuselage of the E190 in m: https://modernairliners.com/embraer-e-jet-specs/
 
 fuselage_pts: 
     0: [8547.42, 1505.00, 5678.37]
