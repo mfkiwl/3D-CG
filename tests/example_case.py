@@ -12,6 +12,7 @@ sys.path.append(str(sim_root_dir.joinpath('mesh')))
 sys.path.append(str(sim_root_dir.joinpath('master')))
 sys.path.append(str(sim_root_dir.joinpath('viz')))
 sys.path.append(str(sim_root_dir.joinpath('CG')))
+sys.path.append(str(sim_root_dir.joinpath('postprocessing')))
 
 import numpy as np
 from import_util import load_mat
@@ -28,6 +29,7 @@ import logging.config
 import helper
 import domain_helper_fcns
 import cg_gradient
+import extract_surface
 
 ### Example test case illustrating surface extraction/visualization and gradient calculation with both the new and old methods
 
@@ -54,7 +56,7 @@ def test_3d_cube_sine_neumann(porder, meshfile, solver):
     call_pv = True
     # call_pv = False
     # viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
-    surf_viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {}}
+    surf_viz_labels = {'scalars': {0: 'Solution', 1: 'Gradient dot normal'}, 'vectors': {}}
     visorder = porder
     solver_tol=1e-10
     
@@ -162,9 +164,17 @@ def test_3d_cube_sine_neumann(porder, meshfile, solver):
     grad[:,2] = 1
 
     logger.info('Visualizing extracted surface')
+    surf_face_pg = np.array([1, 2, 3, 4, 5, 6])
+
+    # Uncomment to visualize specific faces
     # viz.visualize_surface_scalars(mesh, master, np.array([50, 51]), 'face', sol[:,None], visorder, surf_viz_labels, vis_filename+'_surface_face', call_pv)
-    viz.visualize_surface_scalars(mesh, master, np.array([1, 2, 3, 4, 5, 6]), 'pg', sol[:,None], visorder, surf_viz_labels, vis_filename+'_surface', call_pv)
-    viz.visualize_surface_vector_field(mesh, master, np.array([1, 2, 3, 4, 5, 6]), 'pg', grad, visorder, surf_viz_labels, vis_filename+'_surface_nrml', call_pv)
+    
+    mesh_face, face_scalars = extract_surface.extract_surfaces(mesh, master, surf_face_pg, 'pg', sol[:,None])
+    __, face_field_dot_normal = extract_surface.extract_surfaces(mesh, master, surf_face_pg, 'pg', grad, return_normal_quantity=True)
+    
+    face_scalars = np.concatenate((face_scalars, face_field_dot_normal), axis=1)
+
+    viz.visualize(mesh_face, visorder, surf_viz_labels, vis_filename+'_surface', call_pv, face_scalars, None, type='surface_mesh') # Can only have scalars on a surface mesh
 
     return norm_error, grad_error
 

@@ -17,6 +17,7 @@ sys.path.append(str(sim_root_dir.joinpath('master')))
 sys.path.append(str(sim_root_dir.joinpath('viz')))
 sys.path.append(str(sim_root_dir.joinpath('CG')))
 sys.path.append(str(sim_root_dir.joinpath('logging')))
+sys.path.append(str(sim_root_dir.joinpath('postprocessing')))
 import logger_cfg
 import logging
 import datetime
@@ -68,9 +69,9 @@ else:
 
 bdry = (x_minus_face, x_plus_face, y_minus_face, y_plus_face, z_minus_face, z_plus_face)
 if 'surface_index' in config_dict:  # Allows for manual entry of the face index of the aircraft surface instead of automatically calculating it from the boundary fields
-    surf_faces = np.array([config_dict['surface_index']]).astype(np.int32)
+    surf_face_pg = np.array([config_dict['surface_index']]).astype(np.int32)
 else:
-    surf_faces = np.arange(min(bdry)-1)+1         # Number of faces on aircraft body is implied from the value of the min face, which is assigned after the aircraft surfaces in the mesh generator script
+    surf_face_pg = np.arange(min(bdry)-1)+1         # Number of faces on aircraft body is implied from the value of the min face, which is assigned after the aircraft surfaces in the mesh generator script
 
 if 'surf_viz_labels' in config_dict:
     surf_viz_labels = config_dict['surf_viz_labels']
@@ -92,6 +93,8 @@ import calc_derivative
 import os
 import helper
 import domain_helper_fcns
+import cg_gradient
+import extract_surface
 
 logger.info('SLURM_JOB_ID: ' + SLURM_JOB_ID)
 logger.info('SLURM_JOB_NAME: ' + SLURM_JOB_NAME)
@@ -113,19 +116,19 @@ try:
     nbc = {face:0 for face in bdry}
 
     if case_select == 'Phi':
-        dbc = {face:1 for face in surf_faces}
+        dbc = {face:1 for face in surf_face_pg}
         dbc.update(nbc)     # Concatenating two dictionaries together
         nbc = {}
     elif case_select == 'Ex':
-        dbc = {face:0 for face in surf_faces}
+        dbc = {face:0 for face in surf_face_pg}
         nbc[x_minus_face] = -1
         nbc[x_plus_face] = 1
     elif case_select == 'Ey':
-        dbc = {face:0 for face in surf_faces}
+        dbc = {face:0 for face in surf_face_pg}
         nbc[y_minus_face] = -1
         nbc[y_plus_face] = 1
     elif case_select == 'Ez':
-        dbc = {face:0 for face in surf_faces}
+        dbc = {face:0 for face in surf_face_pg}
         nbc[z_minus_face] = -1
         nbc[z_plus_face] = 1
 
@@ -191,14 +194,10 @@ try:
     ########## CALC DERIVATIVES ##########
     logger.info('Calculating derivatives')
 
-    # Reshape into DG high order data structure
-    sol_reshaped = helper.reshape_field(mesh, sol, 'to_array', 'scalars')
+    grad, grad_mag = cg_gradient.calc_gradient(mesh, master, sol[:,None], ndim, solver, solver_tol)
 
-    grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)[None,:,:]
-
-    grad_reshaped = helper.reshape_field(mesh, grad, 'to_column', 'vectors')
-
-    result_out = np.concatenate((sol, np.squeeze(grad_reshaped)), axis=1)    # Column 0 is the solution vector at the pcg nodes, and cols [1-3] are the gradient at the pcg nodes
+    e_field = -grad # Sign flip, E = -grad(potential)
+    result_out = np.concatenate((sol, e_field), axis=1)
 
     with open(vis_filename + '_solution.npy', 'wb') as file:
         np.save(file, result_out)
@@ -207,12 +206,24 @@ try:
     ########## VISUALIZE SOLUTION ##########
 
     logger.info('Generating .VTU file of solution...')
-    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol, vectors=grad)
+    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol, vectors=e_field)
 
     if surf_viz_labels is not None:
-        logger.info('Visualizing aircraft surface')
-        viz.visualize_surface_field(mesh, master, np.array([1, 2, 3, 4, 5, 6]), 'pg', sol[:,None], visorder, surf_viz_labels, vis_filename+'_surface', call_pv)
+        logger.info('Visualizing aircraft surface fields')
 
+        mesh_face, face_scalars = extract_surface.extract_surfaces(mesh, master, surf_face_pg, 'pg', sol)
+        __, face_field_dot_normal = extract_surface.extract_surfaces(mesh, master, surf_face_pg, 'pg', e_field, return_normal_quantity=True)
+        
+        face_scalars = np.concatenate((face_scalars, face_field_dot_normal), axis=1)
+
+        viz.visualize(mesh_face, visorder, surf_viz_labels, vis_filename+'_surface', call_pv, face_scalars, None, type='surface_mesh') # Can only have scalars on a surface mesh
+
+        logger.info('Saving surface mesh to disk')
+        with open(vis_filename + 'surface_mesh', 'w+b') as file:
+            pickle.dump(mesh_face, file)
+
+        with open(vis_filename + '_surface_scalars.npy', 'wb') as file:
+            np.save(file, face_scalars)
 
 except Exception as e:
     logger.exception('message')

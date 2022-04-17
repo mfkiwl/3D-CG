@@ -185,6 +185,10 @@ def get_elem_face_normals(mesh_dgnodes, master, ndim, idx_tup):
 
     elif ndim == 3:
 
+        # Face number out of the total number of faces
+        if idx_tup[2] % 10000 == 0:
+            logger.info('Computing normal vector  for face '+ str(idx_tup[2]))
+
         elem_idx = idx_tup[0]
         face_idx = idx_tup[1]
         dgnodes = mesh_dgnodes[elem_idx,:,:]
@@ -216,7 +220,6 @@ def get_elem_face_normals(mesh_dgnodes, master, ndim, idx_tup):
         GRAD_ETA = J_inv[:,:,1]
         GRAD_GAMMA = J_inv[:,:,2]
 
-
         # Refer to masternodes for the way the faces are indexed - this has to match up with the way the faces are indexed in mesh.f
         if face_idx == 0:   
             n = (GRAD_XI + GRAD_ETA + GRAD_GAMMA) / np.linalg.norm(GRAD_XI + GRAD_ETA + GRAD_GAMMA, axis=1)[:,None]
@@ -230,7 +233,5 @@ def get_elem_face_normals(mesh_dgnodes, master, ndim, idx_tup):
         elif face_idx == 3:
             n = -GRAD_GAMMA/np.linalg.norm(GRAD_GAMMA, axis=1)[:,None]
 
-    # print(n)
-    # exit()
     # Returns a nloc_ptsx3 array of the normal vectors on the given face
     return n

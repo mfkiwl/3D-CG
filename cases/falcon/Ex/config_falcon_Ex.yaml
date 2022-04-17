@@ -22,6 +22,12 @@ viz_labels:
     vectors:
         0: Potential Gradient
 
+surf_viz_labels:
+    scalars:
+        0: Surface Potential
+        1: Surface Normal Electric Field
+    vectors:
+    
 ########## GEOMETRY SETUP ##########
 scale_factor: 1.0 
 

@@ -58,9 +58,13 @@ def cgmesh(mesh, t_linear=None, master=None, case='volume_mesh', field=None, typ
         face_mesh = {}
         face_mesh['t'] = np.zeros((t_linear.shape[0], nnodes_per_face)).astype(np.int32)
 
+        face_mesh['global_elem_idx'] = np.zeros((t_linear.shape[0], 2))
+
         for iface, face in enumerate(t_linear):
             facenum = face[0]   # Global facenumber, as this got lost when we sliced the face array
             bdry_elem = face[-1]
+            face_mesh['global_elem_idx'] = np.array([facenum, bdry_elem])
+
             face_elem = face[1:-1]
             face_mesh['t'][iface, :] = face_elem    # face_mesh['t] contains the connectivity in the GLOBAL volume node array
 

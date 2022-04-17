@@ -22,6 +22,12 @@ viz_labels:
     vectors:
         0: Potential Gradient
 
+surf_viz_labels:
+    scalars:
+        0: Surface Potential
+        1: Surface Normal Electric Field
+    vectors:
+    
 ########## GEOMETRY SETUP ##########
 fuselage_dia: 3.01     # This is the diameter of the fuselage of the E190 in m: https://modernairliners.com/embraer-e-jet-specs/
 
