@@ -13,13 +13,18 @@ sys.path.append(str(sim_root_dir.joinpath('master')))
 import shap
 import masternodes
 
-def reshape_field(mesh, data, case, type, porder=None):
+def reshape_field(mesh, data, case, type, porder=None, dim_override=None):
     if porder == 1:
         tcg = mesh['t']
         nplocal = mesh['t'].shape[1]
     else:
         tcg = mesh['tcg']
         nplocal = mesh['plocal'].shape[0]
+
+    if dim_override is not None:
+        ndim = dim_override
+    else:
+        ndim = mesh['ndim']
 
     if type == 'scalars':
         if case == 'to_array':
@@ -44,7 +49,6 @@ def reshape_field(mesh, data, case, type, porder=None):
     elif type == 'vectors':
         if case == 'to_array':
             data_reshaped = np.zeros((mesh['plocal'].shape[0],3*mesh['t'].shape[0]))
-            ndim = mesh['ndim']
             # for dim in np.arange(ndim):
             #     data_reshaped[:,dim::ndim] = data[:,dim][:,None]
             for ielem, __ in enumerate(mesh['t']):
@@ -53,10 +57,9 @@ def reshape_field(mesh, data, case, type, porder=None):
             return data_reshaped
 
         elif case == 'to_column':
-            ndim = mesh['ndim']
-            data_reshaped = np.zeros((data.shape[0], mesh['pcg'].shape[0], mesh['ndim']))
+            data_reshaped = np.zeros((data.shape[0], mesh['pcg'].shape[0], ndim))
             for vec_idx in np.arange(data.shape[0]):
-                for dim in np.arange(mesh['ndim']):
+                for dim in np.arange(ndim):
                     data_reshaped[vec_idx,:,dim] = np.squeeze(reshape_field(mesh, data[vec_idx,:,:][:,dim::ndim], 'to_column', 'scalars'))
 
     return data_reshaped

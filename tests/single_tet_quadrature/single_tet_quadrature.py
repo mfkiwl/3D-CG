@@ -25,6 +25,9 @@ import domain_helper_fcns
 import cg_gradient
 from numpy.polynomial import Polynomial as poly
 from pascalindex import pascalindex3d
+from functools import partial
+from pathos.multiprocessing import ProcessingPool as Pool
+
 
 def single_tet_quadrature(porder):
 
@@ -119,7 +122,8 @@ def single_tet_normals(porder):
         loc_face_idx = np.where(mesh['t2f'][bdry_elem, :] == facenum)[0][0]     #try np.abs here?
 
         # Pull the local nodes on that face from permface - we don't want to include all the nodes in the element
-        errors[bdry_face_num, :,:] = normals_exact[bdry_face_num,:,:] - quadrature.get_elem_face_normals(mesh['dgnodes'][bdry_elem,:,:], master, mesh['ndim'], loc_face_idx)
+        idx_tup=(bdry_elem, loc_face_idx)
+        errors[bdry_face_num, :,:] = normals_exact[bdry_face_num,:,:] - quadrature.get_elem_face_normals(mesh['dgnodes'], master, mesh['ndim'], idx_tup)
 
     return np.linalg.norm(errors.ravel(), np.inf)
 
@@ -134,10 +138,10 @@ if __name__ == '__main__':
 
     # print(single_tet_normals(1))
     # print(single_tet_normals(2))
-    # print(single_tet_normals(3))
+    print(single_tet_normals(3))
     # print(single_tet_normals(4))
 
-    print(single_tet_gradients(1))
-    print(single_tet_gradients(2))
-    print(single_tet_gradients(3))
-    print(single_tet_gradients(4))
+    # print(single_tet_gradients(1))
+    # print(single_tet_gradients(2))
+    # print(single_tet_gradients(3))
+    # print(single_tet_gradients(4))

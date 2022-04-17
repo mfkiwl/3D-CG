@@ -15,6 +15,10 @@ import os
 import logging
 import gmshwrite
 from mkf_parallel2 import mkt2f_new
+from functools import partial
+from pathos.multiprocessing import ProcessingPool as Pool
+import multiprocessing as mp
+import quadrature
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +118,37 @@ def visualize(mesh, visorder, labels, vis_filename, call_pv, scalars=None, vecto
 
     generate_vtu(viz_mesh['pcg'], viz_mesh['t_linear'], scalars, vectors, labels, vis_filename, call_pv)
 
-def extract_surfaces(mesh, master, face_groups, case, field):
+def compute_normal_derivatives(mesh_vol, master_vol, mesh_face, vector_field, faces):
+    # Get normal vectors for the HO pts on each face using compute_normal_derivatives()
+
+    # nplocface = master['plocface'].shape[0]
+    # numel_faces = mesh_face['t'].shape[0]
+
+    idx_set = []
+    nnodes_per_face = mesh_vol['gmsh_mapping'][mesh_vol['elemtype']]['nnodes'][mesh_vol['ndim']-1]
+
+    for face in faces:
+        bdry_elem = face[nnodes_per_face+1]
+
+        # Collect nodes of faces on boundary ONLY
+        # Find the index that the face is in in t2f
+        loc_face_idx = np.where(mesh_vol['t2f'][bdry_elem, :] == face[0])[0][0] # Remember that the first element in the face is the global index, as built in the fist line of the function
+        idx_set.append((bdry_elem, loc_face_idx))
+
+    pool = Pool(mp.cpu_count())
+    result = pool.map(partial(quadrature.get_elem_face_normals, mesh_vol['dgnodes'], master_vol, mesh_vol['ndim']), idx_set)
+    # result = map(partial(quadrature.get_elem_face_normals, mesh_vol['dgnodes'], master_vol, mesh_vol['ndim']), idx_set)
+    normals_array = np.hstack(result)
+
+    # Reassemble into the pcg format
+    normals_pcg = np.squeeze(helper.reshape_field(mesh_face, normals_array[None,:,:], 'to_column', 'vectors', porder=None, dim_override=3))
+
+    # Take dot(grad, normal) to find the normal derivative
+    normal_derivative_qty = np.sum(vector_field*normals_pcg, axis=1)[:,None]
+
+    return normal_derivative_qty
+
+def extract_surfaces(mesh, master, face_groups, case, field, return_normal_quantity=False):
     """
     face_groups can either be a list of individual faces to plot, or a list of physical groups to plot
 
@@ -137,15 +171,18 @@ def extract_surfaces(mesh, master, face_groups, case, field):
             faces.append(f_with_index[face_indices, :-1])   # Specific faces input to visualize
 
         faces = np.vstack(faces)
-    
+   
     # We now have a 2D connectivity matrix. Turn this into a HO CG mesh using a 2D version of cgmesh
-    mesh_face, face_scalars = cgmesh.cgmesh(mesh, faces, master, case='surface_mesh', field=field)
+    mesh_face, face_field = cgmesh.cgmesh(mesh, faces, master, case='surface_mesh', field=field)
     mesh_face['porder'] = mesh['porder']
     mesh_face['ndim'] = mesh['ndim'] - 1
     mesh_face['plocal'], mesh_face['tlocal'], _, _, __, _, _ = masternodes.masternodes(mesh_face['porder'], mesh_face['ndim'])
 
-    return mesh_face, face_scalars
+    if return_normal_quantity:
+        face_field = compute_normal_derivatives(mesh, master, mesh_face, face_field, faces)
 
+    return mesh_face, face_field
+    
 def visualize_surface_scalars(mesh, master, face_groups, case, scalars, visorder, labels, vis_fname, call_pv):
 
     mesh_face, face_scalars = extract_surfaces(mesh, master, face_groups, case, scalars)
@@ -153,10 +190,12 @@ def visualize_surface_scalars(mesh, master, face_groups, case, scalars, visorder
     visualize(mesh_face, visorder, labels, vis_fname, call_pv, face_scalars, None, type='surface_mesh') # Can only have scalars on a surface mesh
     return
 
+def visualize_surface_vector_field(mesh, master, face_groups, case, vectors, visorder, labels, vis_fname, call_pv):
 
-def compute_normal_derivatives():
-    
-    raise NotImplementedError
+    mesh_face, face_field_dot_normal = extract_surfaces(mesh, master, face_groups, case, vectors, return_normal_quantity=True)
+
+    visualize(mesh_face, visorder, labels, vis_fname, call_pv, face_field_dot_normal, None, type='surface_mesh') # Can only have scalars on a surface mesh
+    return
 
 
 

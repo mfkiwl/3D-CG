@@ -108,6 +108,7 @@ def test_3d_cube_sine_neumann(porder, meshfile, solver):
     sol = np.squeeze(sol)
 
     ########## ERROR CALCULATION ##########
+    # sol = domain_helper_fcns.exact_cube_mod_sine(mesh['pcg'])
     exact = domain_helper_fcns.exact_cube_mod_sine(mesh['pcg'])
     # Reshape into DG high order data structure
     sol_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
@@ -150,21 +151,26 @@ def test_3d_cube_sine_neumann(porder, meshfile, solver):
     logger.info('Wrote solution to /out')
 
     ########## VISUALIZE SOLUTION ##########
-    logger.info('Running visualization for volume fields')
-    viz.visualize(mesh, visorder, viz_labels, 'vis_tet', call_pv, scalars=vis_scalars, vectors=viz_grad)
+    # logger.info('Running visualization for volume fields')
+    # viz.visualize(mesh, visorder, viz_labels, 'vis_tet', call_pv, scalars=vis_scalars, vectors=viz_grad)
 
     # import gmshwrite
     # gmshwrite.gmshwrite(mesh['p'], mesh['t'], 'base_mesh_test', mesh['f'], elemnumbering='individual')
 
-    # logger.info('Visualizing extracted surface')
+    grad[:,0] = 1
+    grad[:,1] = 1
+    grad[:,2] = 1
+
+    logger.info('Visualizing extracted surface')
     # viz.visualize_surface_scalars(mesh, master, np.array([50, 51]), 'face', sol[:,None], visorder, surf_viz_labels, vis_filename+'_surface_face', call_pv)
-    # viz.visualize_surface_scalars(mesh, master, np.array([1, 2, 3, 4, 5, 6]), 'pg', sol[:,None], visorder, surf_viz_labels, vis_filename+'_surface', call_pv)
+    viz.visualize_surface_scalars(mesh, master, np.array([1, 2, 3, 4, 5, 6]), 'pg', sol[:,None], visorder, surf_viz_labels, vis_filename+'_surface', call_pv)
+    viz.visualize_surface_vector_field(mesh, master, np.array([1, 2, 3, 4, 5, 6]), 'pg', grad, visorder, surf_viz_labels, vis_filename+'_surface_nrml', call_pv)
 
     return norm_error, grad_error
 
 if __name__ == '__main__':
-    print('porder', 2, 'cube24', 'direct')
-    print(test_3d_cube_sine_neumann(2, 'cube24', 'direct'))
+    # print('porder', 2, 'cube24', 'direct')
+    # print(test_3d_cube_sine_neumann(2, 'cube24', 'direct'))
     # print('porder', 2, 'cube100', 'direct')
     # print(test_3d_cube_sine_neumann(2, 'cube100', 'direct'))
     # print('porder', 2, 'cube4591', 'gmres')
@@ -186,5 +192,5 @@ if __name__ == '__main__':
 
     # print('porder', 3, 'cube4591', 'cg')
     # print(test_3d_cube_sine_neumann(3, 'cube4591', 'cg'))
-    # print('porder', 3, 'cube4591', 'gmres')
-    # print(test_3d_cube_sine_neumann(3, 'cube4591', 'gmres'))
+    print('porder', 3, 'cube4591', 'gmres')
+    print(test_3d_cube_sine_neumann(3, 'cube4591', 'gmres'))

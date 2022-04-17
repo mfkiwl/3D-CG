@@ -71,23 +71,19 @@ def cgmesh(mesh, t_linear=None, master=None, case='volume_mesh', field=None, typ
             # Use the perm indices to grab the face nodes from tcg
             face_nodes = mesh['tcg'][bdry_elem][loc_face_nodes] # in pcg
             
-            # ph[nplocface*iface:nplocface*(iface+1),:] = mesh['pcg'][face_nodes,:]
             th[nplocface*iface:nplocface*(iface+1)] = face_nodes
 
         # Build mesh.p - renumber faces
         p_unique_faces, __, p_inverse_idx = np.unique(face_mesh['t'].ravel(), return_index=True, return_inverse=True)
         face_mesh['p'] = mesh['p'][p_unique_faces,:]
         face_mesh['t'] = np.reshape(p_inverse_idx, (-1, nnodes_per_face))    # Resets the numbering of the faces on the surface mesh
-        # print(face_mesh['t'].shape)
-        # gmshwrite.gmshwrite(face_mesh['p'], face_mesh['t'], 'face_mesh')
-        # exit()
 
         p_unique_faces, unique_idx, inverse_idx = np.unique(th, return_index=True, return_inverse=True)
 
         tcg_faces = np.reshape(inverse_idx, (-1, nplocface))    # Resets the numbering of the faces on the surface mesh
 
         pcg_faces = mesh['pcg'][p_unique_faces]
-        field_faces = field[p_unique_faces]
+        field_faces = field[p_unique_faces]     # Works for both scalar and vector arrays
 
         face_mesh['tcg'] = tcg_faces
         face_mesh['pcg'] = pcg_faces
@@ -110,6 +106,6 @@ if __name__ == '__main__':
     mesh = mkmesh_square(3)
     tcg = cgmesh(mesh)
 
-    print(np.allclose(mesh['pcg'], pcg, rtol=1e-13, atol=4e-15))        # DIDN'T WORK!!!!!!! TOLERANCE WAS TOO HIGH!!!!
+    print(np.allclose(mesh['pcg'], pcg, rtol=1e-13, atol=4e-15))
     print(np.allclose(mesh['tcg']+1, tcg_mat))
     

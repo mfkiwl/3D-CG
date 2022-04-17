@@ -73,3 +73,26 @@ def unit_square_total_surf_area():
 
     # This is the total surface area of all the faces - should == 6
     return quadrature.surface_integral_parallel(mesh, master, np.ones((mesh['pcg'].shape[0], 1)), bdry_faces, nnodes_per_face)
+
+def unit_cube_normals():
+    with open('./cube_mesh/mesh', 'rb') as file:
+        mesh = pickle.load(file)
+    with open('./cube_mesh/master', 'rb') as file:
+        master = pickle.load(file)
+
+    master['phi_inv'] = np.linalg.pinv(master['shapvol'][:, :, 0])
+
+    print(mesh['f'].shape)
+    bdry_faces = mesh['f'][mesh['f'][:, -1] < 0, :]     # All the faces on the cube
+    bdry_faces_start_idx = np.where(mesh['f'][:, -1] < 0)[0][0]
+    print(bdry_faces_start_idx)
+    print(mesh['p'][mesh['t'][91,:]])
+    print()
+    print(mesh['dgnodes'][91])
+    print()
+    print(mesh['t2f'][91])
+
+    n = quadrature.get_elem_face_normals(mesh['dgnodes'], master, 3, (91, 1))
+
+if __name__ == '__main__':
+    unit_cube_normals()

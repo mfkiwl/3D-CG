@@ -172,7 +172,7 @@ def volume_integral(mesh, master, scalar_field, elements):
 
     return integral_qty
 
-def get_elem_face_normals(dgnodes, master, ndim, face_idx):
+def get_elem_face_normals(mesh_dgnodes, master, ndim, idx_tup):
 
     """
     dgnodes are the high order nodes on the face on which to calculate the normals
@@ -185,38 +185,52 @@ def get_elem_face_normals(dgnodes, master, ndim, face_idx):
 
     elif ndim == 3:
 
+        elem_idx = idx_tup[0]
+        face_idx = idx_tup[1]
+        dgnodes = mesh_dgnodes[elem_idx,:,:]
+
+        nplocface = master['plocface'].shape[0]
+
+        # First, prepare data structures to build PHI, DX, and DY, DETJ, and other matrices:
+        face_nodes_loc_idx = master['perm'][:, face_idx]
+
         # Computing gradients at the GQ pts and then reinterpolating to the DG nodes to avoid using the koornwinder derivatives at the corners
         GRAD_XI_gq = master['shapvol'][:, :, 1]@dgnodes
         GRAD_ETA_gq = master['shapvol'][:, :, 2]@dgnodes
         GRAD_GAMMA_gq = master['shapvol'][:, :, 3]@dgnodes
 
-        GRAD_XI = master['phi_inv']@GRAD_XI_gq
-        GRAD_ETA = master['phi_inv']@GRAD_ETA_gq
-        GRAD_GAMMA = master['phi_inv']@GRAD_GAMMA_gq
-
-        # First, prepare data structures to build PHI, DX, and DY, DETJ, and other matrices:
-        face_nodes_loc_idx = master['perm'][:, face_idx]
+        DXYZ_DXI = (master['phi_inv']@GRAD_XI_gq)[face_nodes_loc_idx,:]
+        DXYZ_DETA = (master['phi_inv']@GRAD_ETA_gq)[face_nodes_loc_idx,:]
+        DXYZ_DGAMMA = (master['phi_inv']@GRAD_GAMMA_gq)[face_nodes_loc_idx,:]
 
         # local_normal_pts could be any local points, but most likely the nodal or GQ pts. If they are at the GQ pts, this is the same as master['shapv'], but this can't be assumed so we need to remake it.
+        J = np.zeros((nplocface, 3, 3))
+        J[:, 0, :] = DXYZ_DXI
+        J[:, 1, :] = DXYZ_DETA
+        J[:, 2, :] = DXYZ_DGAMMA
+
+        J_inv, __ = inv(J)
+
+        # Grad xi, eta, gamma are the columns of J^-1, see 16.930 notes
+        GRAD_XI = J_inv[:,:,0]
+        GRAD_ETA = J_inv[:,:,1]
+        GRAD_GAMMA = J_inv[:,:,2]
+
 
         # Refer to masternodes for the way the faces are indexed - this has to match up with the way the faces are indexed in mesh.f
         if face_idx == 0:   
-            GRAD_XI = (master['shapvol_nodal'][:, :, 1]@dgnodes)[face_nodes_loc_idx,:]
-            GRAD_ETA = (master['shapvol_nodal'][:, :, 2]@dgnodes)[face_nodes_loc_idx,:]
-            GRAD_GAMMA = (master['shapvol_nodal'][:, :, 3]@dgnodes)[face_nodes_loc_idx,:]
             n = (GRAD_XI + GRAD_ETA + GRAD_GAMMA) / np.linalg.norm(GRAD_XI + GRAD_ETA + GRAD_GAMMA, axis=1)[:,None]
 
         elif face_idx == 1:
-            GRAD_XI = (master['shapvol_nodal'][:, :, 1]@dgnodes)[face_nodes_loc_idx,:]
             n = -GRAD_XI/np.linalg.norm(GRAD_XI, axis=1)[:,None]
 
         elif face_idx == 2:
-            GRAD_ETA = (master['shapvol_nodal'][:, :, 2]@dgnodes)[face_nodes_loc_idx,:]
             n = -GRAD_ETA/np.linalg.norm(GRAD_ETA, axis=1)[:,None]
 
         elif face_idx == 3:
-            GRAD_GAMMA = (master['shapvol_nodal'][:, :, 3]@dgnodes)[face_nodes_loc_idx,:]
             n = -GRAD_GAMMA/np.linalg.norm(GRAD_GAMMA, axis=1)[:,None]
 
+    # print(n)
+    # exit()
     # Returns a nloc_ptsx3 array of the normal vectors on the given face
     return n
