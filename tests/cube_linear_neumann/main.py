@@ -18,6 +18,7 @@ import logging
 import logging.config
 import helper
 import domain_helper_fcns
+import cg_gradient
 
 def test_3d_cube_linear_neumann(porder, meshfile, solver):
 
@@ -40,6 +41,7 @@ def test_3d_cube_linear_neumann(porder, meshfile, solver):
     vis_filename = 'cube_sol'
     ndim = 3
     call_pv = False
+    # call_pv = True
     viz_labels = {'scalars': {0: 'Solution'}, 'vectors': {0: 'Solution Gradient'}}
     visorder = porder
     solver_tol=1e-10
@@ -79,6 +81,9 @@ def test_3d_cube_linear_neumann(porder, meshfile, solver):
 
     sol = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_zero, param, ndim, outdir, buildAF=True, solver=solver, solver_tol=solver_tol)
 
+    exact = domain_helper_fcns.exact_linear(mesh['pcg'], 'x')[:,None]
+    grad_exact = domain_helper_fcns.grad_linear_solution(mesh['pcg'], 'x')
+
     ########## SAVE DATA ##########
 
     # NOTE: in the future uh will need to be reshaped into a nplocal x numvisfields x numel when the derivatives are added
@@ -90,38 +95,60 @@ def test_3d_cube_linear_neumann(porder, meshfile, solver):
         pickle.dump(sol, file)
     logger.info('Wrote solution to file...')
 
-
-    sol = np.squeeze(sol)
+    ########## CALC DERIVATIVES ##########
+    logger.info('Calculating derivatives')
+    grad, __ = cg_gradient.calc_gradient(mesh, master, sol, ndim, solver, solver_tol)
 
     ########## ERROR CALCULATION ##########
-    exact = domain_helper_fcns.exact_linear(mesh['pcg'], 'x')
-    # Reshape into DG high order data structure
-    sol_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
-    exact_reshaped = np.zeros((mesh['plocal'].shape[0], mesh['t'].shape[0]))
-    for i in np.arange(mesh['t'].shape[0]):          # Set dirichlet BC
-        sol_reshaped[:, i] = sol[mesh['tcg'][i, :]]
-        exact_reshaped[:, i] = exact[mesh['tcg'][i, :]]
 
-    error = exact_reshaped.ravel()-sol_reshaped.ravel()
-    norm_error = np.linalg.norm(error, np.inf)
-    logger.info('L-inf error: '+str(norm_error))
+    sol_error = exact-sol
+    norm_grad_error = np.linalg.norm((grad-grad_exact).ravel(), np.inf)
+    logger.info('L-inf error of gradient: '+str(norm_grad_error))
 
-    ########## CALC DERIVATIVES ##########
+    norm_error = np.linalg.norm(sol_error, np.inf)
+    logger.info('L-inf error of solution: '+str(norm_error))
 
-    logger.info('Calculating derivatives')
+    ########## VISUALIZE SOLUTION ##########
+    logger.info('Running visualization for volume fields')
 
-    # Reshape into DG high order data structure
-    sol_reshaped = helper.reshape_field(mesh, sol[:,None], 'to_array', 'scalars')
+    viz_grad = np.concatenate((grad, grad_exact, (grad_exact-grad)), axis=1)
+    vis_scalars = np.concatenate((exact, sol), axis=1)
 
-    grad = calc_derivative.calc_derivatives(mesh, master, sol_reshaped, ndim)
+    viz_labels = {'scalars': {0: 'Computed Solution', 1: 'Exact Solution'}, 'vectors': {0: 'Computed Gradient', 1: 'Exact Gradient', 2: 'Gradient Error CG'}}
+    viz.visualize(mesh, visorder, viz_labels, 'vis_tet', call_pv, scalars=vis_scalars, vectors=viz_grad)
 
-    result_out = np.concatenate((sol_reshaped, grad), axis=1)
+    ########## SAVE GRADIENT DATA ##########
 
-    with open(outdir+'solution' + vis_filename + '.npy', 'wb') as file:
+    result_out = np.concatenate((sol, grad), axis=1)
+    with open(vis_filename+'_and_grad' + '.npy', 'wb') as file:
         np.save(file, result_out)
     logger.info('Wrote solution to /out')
 
-    # ########## VISUALIZE SOLUTION ##########
-    # Might have to tweak dimensions based on how the viz functions in the HPC version handle it
-    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol[:,None], vectors=grad[None,:,:])
-    return norm_error
+    return norm_error, norm_grad_error
+
+if __name__ == '__main__':
+    print('porder', 2, 'cube24', 'direct')
+    print(test_3d_cube_linear_neumann(2, 'cube24', 'direct'))
+    print('porder', 2, 'cube100', 'direct')
+    print(test_3d_cube_linear_neumann(2, 'cube100', 'gmres'))
+    print('porder', 2, 'cube4591', 'gmres')
+    print(test_3d_cube_linear_neumann(2, 'cube4591', 'gmres'))
+
+    print('porder', 3, 'cube24', 'direct')
+    print(test_3d_cube_linear_neumann(3, 'cube24', 'direct'))
+    print('porder', 3, 'cube24', 'cg')
+    print(test_3d_cube_linear_neumann(3, 'cube24', 'cg'))
+    print('porder', 3, 'cube24', 'gmres')
+    print(test_3d_cube_linear_neumann(3, 'cube24', 'gmres'))
+
+    print('porder', 3, 'cube100', 'direct')
+    print(test_3d_cube_linear_neumann(3, 'cube100', 'direct'))
+    print('porder', 3, 'cube100', 'cg')
+    print(test_3d_cube_linear_neumann(3, 'cube100', 'cg'))
+    print('porder', 3, 'cube100', 'gmres')
+    print(test_3d_cube_linear_neumann(3, 'cube100', 'gmres'))
+
+    print('porder', 3, 'cube4591', 'cg')
+    print(test_3d_cube_linear_neumann(3, 'cube4591', 'cg'))
+    print('porder', 3, 'cube4591', 'gmres')
+    print(test_3d_cube_linear_neumann(3, 'cube4591', 'gmres'))

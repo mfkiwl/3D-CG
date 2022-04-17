@@ -50,12 +50,12 @@ def mkmaster(mesh, ndim, pgauss=None):
         master['shapface'] = shape2d(master['porder'], master['plocface'], master['gptsface'])
         master['shapvol'] = shape3d(master['porder'], master['plocvol'], master['gptsvol'])
         master['shapvol_nodal'] = shape3d(master['porder'], master['plocvol'], master['plocvol'])   # Shape functions evaluated at the nodes for calculating the gradient
-
+        master['phi_inv'] = np.linalg.pinv(master['shapvol'][:, :, 0])
 
         # Generate mass matrices - note the order of the transpose differs from the matlab script because of the C vs Fortran ordering
         master['massface'] = master['shapface'][:,:,0].T@np.diag(master['gwface'])@master['shapface'][:,:,0]
         master['massvol'] = master['shapvol'][:,:,0].T@np.diag(master['gwvol'])@master['shapvol'][:,:,0]
-        
+
         # Convection matrices
         convx = np.squeeze(master['shapvol'][:,:,0]).T@np.diag(master['gwvol'])@np.squeeze(master['shapvol'][:,:,1])
         convy = np.squeeze(master['shapvol'][:,:,0]).T@np.diag(master['gwvol'])@np.squeeze(master['shapvol'][:,:,2])

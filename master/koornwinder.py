@@ -13,6 +13,7 @@ def koornwinder(pts_eval, p):
     Driver for the koornwinder shape function generation
     "Tensor products of Jacobi polynomials"
     """
+    raise NotImplementedError('Use other functions instead')
 
     dim = pts_eval.shape[1]
     if dim == 1:
@@ -93,7 +94,7 @@ def koornwinder2d(pts_eval, porder):
     xi = 2*pts_eval-1   # Operates on both x and y - stretching and shifting triangle so that midpoint of hypotenuse is on the origin - in "standard" configuration
     
     ind_1 = np.argwhere(xi[:, 1] > 0.99999999)  # Or, we could have hard set the singularity while performing the transformation (see koornwinder3d)
-    # id_1 if the corner point exists: [[9]], shape = (1, 1)
+    # id_1 if the corner point exists (for example): [[9]], shape = (1, 1)
     # id_1 if the corner point does not exist: [], shape = (0, 1)
     if ind_1.shape[0]:   # There will not always be a point at the corner, for example if koornwinder is being used to evaluate at the GQpts
         xi[ind_1, 1] = 0.99999999
@@ -106,15 +107,13 @@ def koornwinder2d(pts_eval, porder):
     # Saving points at which to evaluate the derivative before resettting the corner point to 1
     eta_displaced = np.copy(eta)
     # Moving the point back to the corner in the actual eta vector
-    eta[ind_1] = 1      # FIX THIS!
+    eta[ind_1] = 1      # More rigorous testing needed into whether this or eta[ind_1] = 1 makes a difference in the 2D case
 
     jac = np.zeros_like(xi)
     jac[:, 0] = 2/(1-xi[:, 1])
     jac[:, 1] = 2*(1+xi[:, 0])/(1-xi[:, 1])**2
 
     for idx, (m, n) in enumerate(poly_indices):
-        # if idx != 4:
-        #     continue
         Px = jacobi(m, 0, 0)
         Py = jacobi(n, 2*m+1, 0)*(poly([1, -1])/2)**m
         dPx = Px.deriv(1)
@@ -125,7 +124,7 @@ def koornwinder2d(pts_eval, porder):
         Py_val = Py(eta[:, 1])
         
         # However, the jacobian is singular at the corner, so we can't evaluate that point directly in our integral. Instead, we look at the point that is slightly displaced from the corner and evaluate the derivative of the function at that displaced point.
-        # Note that since we have split up the function into muliple parts to differentiate via the product rule, we still need to evaluate both the derivative and re-evaluate the shape function at the displaced point. The only difference between eta and eta_displaced is that the eta coord of the corner is shifted down slightly.
+        # Note that since we have split up the function into multiple parts to differentiate via the product rule, we still need to evaluate both the derivative and re-evaluate the shape function at the displaced point. The only difference between eta and eta_displaced is that the eta coord of the corner is shifted down slightly.
         Px_val_disp = Px(eta_displaced[:, 0])
         Py_val_disp = Py(eta_displaced[:, 1])
         dPx_val = dPx(eta_displaced[:, 0])
@@ -138,7 +137,7 @@ def koornwinder2d(pts_eval, porder):
         Vx[:, idx] = dPx_val*Py_val_disp*jac[:, 0]*norm
         Vy[:, idx] = norm*(dPx_val*Py_val_disp*jac[:, 1] + Px_val_disp*dPy_val)
 
-    Vx *= 2
+    Vx *= 2     # Derivatives are magnified because the domain is compressed in the transformation back to the master triangle
     Vy *= 2
 
     return V, Vx, Vy
@@ -181,6 +180,20 @@ def koornwinder3d(pts_eval, porder):
     # Perform a transformation from the master element (triangle) to a larger master triangle centered at the origin with side legnth 2 - the element on the right of diagram on pg 25 of Interpolation 16.930 notes
     xi = 2*pts_eval-1   # Operates on both x and y - stretching and shifting triangle so that midpoint of hypotenuse is on the origin - in "standard" configuration
 
+    """
+    DANGER: Known issue with calculation of gradient of koornwinder polynomials at the corners of the triangle/tet due to singularity of transformation. Four cases:
+    KP = koornwinder polynomials
+    1) KPs sampled at corners
+    2) KP derivatives sampled at corners
+    3) KPs sampled at GQ pts (exclusively interior)
+    4) KP derivatives sampled at GQ pts (exclusively interior)
+
+    Case 1 is used for interpolating onto a higher mesh
+    Case 2 is used for computing normal vectors and the gradients of a scalar field                 THIS IS THE PROBLEM - initially when this code was written, this use case wasn't envisioned and wasn't a problem because of the known issue with sampling the derivatives at the corners
+    Case 3 is used during normal construction of the elemental matrices during matrix assembly
+    Case 4 is used during normal construction of the elemental matrices during matrix assembly
+
+    """
 
     # # FIX
     # ind_1 = np.argwhere(xi[:, 1] > 0.99999999)
@@ -202,18 +215,19 @@ def koornwinder3d(pts_eval, porder):
     # eta[ind_1] = 1
 
     eta = np.zeros_like(xi)
-    xi_displaced = np.copy(xi)
     eta_displaced = np.zeros_like(xi)
 
+    # "Manual transform" - the points are transformed in a case-by-case basis depending on whether or not they lie at corners
+    xi_displaced = np.copy(xi)
     eps = 1e-8
     for i, pt in enumerate(xi):
-        if abs((pt[1] + pt[2])) < eps:
+        if np.isclose(abs((pt[1] + pt[2])), 0, atol=eps):   # This disagrees with Cuong's implementation because it checks for the sum being close to 0, instead of checking that it is exactly equal to 0, which doesn't account for floating point roundoff.
             eta[i,0] = -1
             xi_displaced[i,2] = -pt[1] - eps
         else:
             # Normal eta1 transform
             eta[i, 0] = -2*(1+pt[0])/(pt[1]+pt[2]) - 1
-        if pt[2] > 1-eps:
+        if np.isclose(pt[2], 1, atol=eps):
             eta[i, 1] = -1
             xi_displaced[i,2] = 1-eps
         else:
@@ -257,7 +271,7 @@ def koornwinder3d(pts_eval, porder):
         # Why not add in a factor of 2^(4i+2j+6)?
 
         # However, the jacobian is singular at the corner, so we can't evaluate that point directly in our integral. Instead, we look at the point that is slightly displaced from the corner and evaluate the derivative of the function at that displaced point.
-        # Note that since we have split up the function into muliple parts to differentiate via the product rule, we still need to evaluate both the derivative and re-evaluate the shape function at the displaced point. The only difference between eta and eta_displaced is that the eta coord of the corner is shifted down slightly.
+        # Note that since we have split up the function into multiple parts to differentiate via the product rule, we still need to evaluate both the derivative and re-evaluate the shape function at the displaced point. The only difference between eta and eta_displaced is that the eta coord of the corner is shifted down slightly.
         Px_val_disp = Px(eta_displaced[:, 0])
         Py_val_disp = Py(eta_displaced[:, 1])
         Pz_val_disp = Pz(eta_displaced[:, 2])
@@ -286,18 +300,19 @@ def koornwinder3d(pts_eval, porder):
     return V, Vx, Vy, Vz
 
 if __name__ == '__main__':
-    np.set_printoptions(suppress=True, linewidth=np.inf)
+    pass
+    # np.set_printoptions(suppress=True, linewidth=np.inf)
     # np.set_printoptions(linewidth=np.inf, precision=10)
-    import sys
-    sys.path.insert(0, '../mesh')
-    sys.path.insert(0, '../util')
-    from mkmshlocal import mkmshlocal
-    from import_util import load_mat
+    # import sys
+    # sys.path.insert(0, '../mesh')
+    # sys.path.insert(0, '../util')
+    # from mkmshlocal import mkmshlocal
+    # from import_util import load_mat
 
-    pl2d, _ = mkmshlocal(3)
-    pl2d = pl2d[:,1:]
-    loc1d_idx = np.squeeze(np.argwhere(pl2d[:, -1] == 0))
-    pl1d = pl2d[loc1d_idx, :-1]
+    # pl2d, _ = mkmshlocal(3)
+    # pl2d = pl2d[:,1:]
+    # loc1d_idx = np.squeeze(np.argwhere(pl2d[:, -1] == 0))
+    # pl1d = pl2d[loc1d_idx, :-1]
 
     # Testing 1D
     # V, Vx = koornwinder(pl1d[:,1:], 3)
@@ -321,3 +336,27 @@ if __name__ == '__main__':
     # print(np.allclose(Vy, Vy_mat))
 
     # Testing 3D
+
+    from scipy.io import loadmat
+    gq_mat = loadmat('porder3ndim3GQ.mat')
+    dg_mat = loadmat('porder3ndim3DG.mat')
+    e_mat = loadmat('e.mat')['e']
+    xc_mat = loadmat('xc.mat')['xc']
+    xi_mat = loadmat('xi.mat')['x']
+
+
+    from gaussquad2d import gaussquad1d, gaussquad2d, gaussquad3d
+    from masternodes import masternodes
+    np.set_printoptions(suppress=True, linewidth=np.inf, precision=12)
+
+    porder=3
+    ploc, _, _, _, _, _, _ = masternodes(porder, 3)
+    gpts, _ = gaussquad3d(6)
+
+    f, fx, fy, fz = koornwinder3d(ploc, porder)
+
+    print(dg_mat['fx']-fx)
+    # print()
+    # print(np.allclose(dg_mat['fx'], fx, rtol=0, atol=1e-13))
+    # print(ploc)
+    # print(fx)

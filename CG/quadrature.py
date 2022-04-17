@@ -184,6 +184,16 @@ def get_elem_face_normals(dgnodes, master, ndim, face_idx):
         raise NotImplementedError('2D not implemented yet')
 
     elif ndim == 3:
+
+        # Computing gradients at the GQ pts and then reinterpolating to the DG nodes to avoid using the koornwinder derivatives at the corners
+        GRAD_XI_gq = master['shapvol'][:, :, 1]@dgnodes
+        GRAD_ETA_gq = master['shapvol'][:, :, 2]@dgnodes
+        GRAD_GAMMA_gq = master['shapvol'][:, :, 3]@dgnodes
+
+        GRAD_XI = master['phi_inv']@GRAD_XI_gq
+        GRAD_ETA = master['phi_inv']@GRAD_ETA_gq
+        GRAD_GAMMA = master['phi_inv']@GRAD_GAMMA_gq
+
         # First, prepare data structures to build PHI, DX, and DY, DETJ, and other matrices:
         face_nodes_loc_idx = master['perm'][:, face_idx]
 

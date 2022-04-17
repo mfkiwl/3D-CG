@@ -2,14 +2,13 @@ import numpy as np
 import elemmat_cg
 import quadrature
 from scipy.sparse import lil_matrix, save_npz, load_npz
-import scipy.sparse.linalg as splinalg
 import matplotlib.pyplot as plt
 import multiprocessing as mp
 from functools import partial
 from pathos.multiprocessing import ProcessingPool as Pool
 import time
 import logging
-import pyamg
+import solvers
 
 logger = logging.getLogger(__name__)
 iter_count = 0
@@ -63,20 +62,6 @@ def assign_bcs(master, mesh, A, F, issparse=True):
 def vissparse(A):
     plt.spy(A)
     plt.show()
-
-def call_iter(A_csr, b, tol, x):
-    global iter_count
-    global last_x
-    if iter_count %1 == 0:
-        residual = A_csr@x[:,None] - b
-        res_norm = np.linalg.norm(residual)
-        stopping = tol*np.linalg.norm(b)
-        error_factor = res_norm/stopping
-        delta_x = np.linalg.norm(x-last_x)
-        last_x = x
-        logger.info('Iteration ' + str(iter_count) + ', current residual norm is {:.5E}, {:.5E} req\'d for stopping, ratio: {:.3f}, norm(Delta x)={:.5E}'.format(res_norm, stopping, error_factor, delta_x))
-    iter_count += 1
-    last_x = x
 
 def cg_solve(master, mesh, forcing, param, ndim, outdir, buildAF=True, solver='amg', solver_tol=1e-7):
     global last_x
@@ -140,48 +125,10 @@ def cg_solve(master, mesh, forcing, param, ndim, outdir, buildAF=True, solver='a
 
     ########## SOLVE ##########
     logger.info('Solving with ' + solver)
-    A_csr = A.tocsr()
 
     logger.info('Prior to solving: Residual norm is {:.5E}'.format(np.linalg.norm(np.linalg.norm(F))))
 
-    if solver=='cg':
-        ml = pyamg.ruge_stuben_solver(A_csr, max_levels=20)    # Multigrid preconditioner
-        P = ml.aspreconditioner()
+    sol = solvers.solve(A, F, solver_tol, solver)
 
-        start = time.perf_counter()
-        res = splinalg.cg(A, F, M=P, x0=None, tol=solver_tol, callback=partial(call_iter, A_csr, F, solver_tol), atol=0)
-        logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
 
-        if not res[1]:    # Successful exit
-            # uh = res[0]   # This line is for compatibility with the test functions
-            uh = res[0][:,None]
-            logger.info('Successfully solved with CG...')
-            logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
-        else:
-            logger.error('CG did not converge, reached ' +str(res[1]) + ' iterations')
-            raise ValueError('CG did not converge, reached ' +str(res[1]) + ' iterations')
-    elif solver=='gmres':
-        ml = pyamg.ruge_stuben_solver(A_csr, max_levels=20)    # Multigrid preconditioner
-        P = ml.aspreconditioner()
-
-        start = time.perf_counter()
-        res = splinalg.gmres(A, F, M=P, x0=None, tol=solver_tol, callback=partial(call_iter, A_csr, F, solver_tol), atol=0, callback_type='x', restart=20)
-        logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
-
-        if not res[1]:    # Successful exit
-            # uh = res[0]
-            uh = res[0][:,None]
-            logger.info('Successfully solved with GMRES...')
-            logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
-        else:
-            logger.error('GMRES did not converge, reached ' +str(res[1]) + ' iterations')
-            raise ValueError('GMRES did not converge, reached ' +str(res[1]) + ' iterations')
-    elif solver=='amg':
-        ml = pyamg.ruge_stuben_solver(A_csr, max_levels=20)                    # construct the multigrid hierarchy
-        start = time.perf_counter()
-        uh = ml.solve(F, x0=None, tol=solver_tol, maxiter=None, callback=partial(call_iter, A_csr, F, solver_tol))
-        logger.info('Solution time: '+ str(round(time.perf_counter()-start, 5)) +'s')
-    elif solver == 'direct':
-        uh = np.linalg.solve(A.todense(), F)
-
-    return uh
+    return sol

@@ -2,7 +2,7 @@ import numpy as np
 import sys
 sys.path.insert(0, '../util')
 import logging
-from math_helper_fcns import inv
+import math_helper_fcns
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def elemmat_cg(dgnodes, master, forcing, param, ndim, idx):
         DPHI_Dx = np.zeros_like(PHI)        # holds dphi/dx vals, size (nplocal, ngpts)
         DPHI_Dy = np.zeros_like(PHI)        # holds dphi/dy vals, size (nplocal, ngpts)
 
-        J_inv, JAC_DET = inv(J)
+        J_inv, JAC_DET = math_helper_fcns.inv(J)
 
         for i in np.arange(n_gqpts):
             tmp = J_inv[i,:,:]@np.concatenate((DPHI_DXI[:, i][:,None], DPHI_DETA[:, i][:,None]), axis=1).T       # 1D indexed vectors need to be promoted to higher dimensional array (2) before concatenation
@@ -90,16 +90,14 @@ def elemmat_cg(dgnodes, master, forcing, param, ndim, idx):
         P_GQ = np.concatenate((x_GQ, y_GQ, z_GQ), axis=1)
         F_GQ = forcing(P_GQ)
 
+        GRAD_XI = DPHI_DXI.T@ho_pts   # (DX_DXI, DY_DXI, DZ_DXI)
+        GRAD_ETA = DPHI_DETA.T@ho_pts  # (DX_DETA, DY_DETA, DZ_DETA)
+        GRAD_GAMMA = DPHI_DGAMMA.T@ho_pts    # (DX_DGAMMA, DY_DGAMMA, DZ_DGAMMA)
+
         J = np.zeros((n_gqpts, 3, 3))
-        J[:, 0, 0] = DPHI_DXI.T@ho_pts[:, 0]     # DX_DXI
-        J[:, 0, 1] = DPHI_DXI.T@ho_pts[:, 1]     # DY_DXI
-        J[:, 0, 2] = DPHI_DXI.T@ho_pts[:, 2]     # DZ_DXI
-        J[:, 1, 0] = DPHI_DETA.T@ho_pts[:, 0]    # DX_DETA
-        J[:, 1, 1] = DPHI_DETA.T@ho_pts[:, 1]    # DY_DETA
-        J[:, 1, 2] = DPHI_DETA.T@ho_pts[:, 2]    # DZ_DETA
-        J[:, 2, 0] = DPHI_DGAMMA.T@ho_pts[:, 0]    # DX_DGAMMA
-        J[:, 2, 1] = DPHI_DGAMMA.T@ho_pts[:, 1]    # DY_DGAMMA
-        J[:, 2, 2] = DPHI_DGAMMA.T@ho_pts[:, 2]    # DZ_DGAMMA
+        J[:, 0, :] = GRAD_XI
+        J[:, 1, :] = GRAD_ETA
+        J[:, 2, :] = GRAD_GAMMA
 
         # holds dphi/dx vals, size (nplocal, ngpts)
         DPHI_Dx = np.zeros_like(PHI)
@@ -108,7 +106,7 @@ def elemmat_cg(dgnodes, master, forcing, param, ndim, idx):
         # holds dphi/dZ vals, size (nplocal, ngpts)
         DPHI_Dz = np.zeros_like(PHI)
 
-        J_inv, JAC_DET = inv(J)
+        J_inv, JAC_DET = math_helper_fcns.inv(J)
 
         for i in np.arange(n_gqpts):
             tmp = J_inv[i,:,:]@np.concatenate((DPHI_DXI[:, i][:, None],DPHI_DETA[:, i][:, None],DPHI_DGAMMA[:, i][:, None]), axis=1).T

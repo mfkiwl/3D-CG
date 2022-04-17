@@ -84,7 +84,6 @@ def shape2d(porder, plocal, pts):
 
 
 def shape3d(porder, plocal, pts):
-
     V3d_nodal, _, _, _ = koornwinder3d(plocal, porder)  # These are the orthogonal basis functions
     np.set_printoptions(suppress=True, linewidth=np.inf, precision=2)
     L = np.linalg.inv(V3d_nodal)
@@ -102,16 +101,6 @@ def shape3d(porder, plocal, pts):
     shape_fn_dz_reshaped = np.ravel(shape_fn_sampled_dz).reshape((pts.shape[0], -1, 1))
 
     shap = np.concatenate((shape_fn_reshaped, shape_fn_dx_reshaped, shape_fn_dy_reshaped, shape_fn_dz_reshaped), axis=2)
-
-    # import sys
-    # sys.path.insert(0, '../util')
-    # from import_util import load_mat
-
-    # import os
-    # os.chdir('../master')
-    # nfs = load_mat('nfs').transpose((2, 0, 1))
-    # print(np.allclose(nfs, shap))
-    # exit()
 
     return shap
 

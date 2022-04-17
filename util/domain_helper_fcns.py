@@ -12,6 +12,75 @@ import time
 
 logger = logging.getLogger(__name__)
 
+
+def forcing_zero(p):
+    return np.zeros((p.shape[0], 1))
+
+def exact_linear(p, axis):
+    if axis == 'x':
+        return p[:,0]
+    elif axis == 'y':
+        return p[:,1]
+    elif axis == 'z':
+        return p[:, 2]
+
+def exact_cube_mod_sine(p, m=1.5):
+    x = p[:, 0]
+    y = p[:, 1]
+    z = p[:, 2]
+    exact = np.sin(m*np.pi*x)# * np.sin(n*np.pi*y) * np.sin(l*np.pi*z)
+    return exact
+
+def forcing_cube_mod_sine(p, m=1.5):
+    forcing_cube = (m**2)*np.pi**2*exact_cube_mod_sine(p, m)        # We can do this because of the particular sin functions chosen for the exact solution
+    return forcing_cube[:, None]   # returns as column vector
+
+def exact_sine_cube(p, m=1):
+
+    x = p[:, 0]
+    y = p[:, 1]
+    z = p[:, 2]
+    exact = np.sin(m*np.pi*x) * np.sin(m*np.pi*y) * np.sin(m*np.pi*z)
+    return exact
+
+def forcing_sine_cube(p, m=1):
+    # Note: doesn't take kappa into account, might add in later
+
+    forcing_cube = (m**2+m**2+m**2)*np.pi**2*exact_sine_cube(p)        # We can do this because of the particular sin functions chosen for the exact solution
+    return forcing_cube[:, None]   # returns as column vector
+
+def grad_linear_solution(p, axis):
+    grad = np.zeros_like(p)
+    if axis == 'x':
+        grad[:,0] = 1
+    if axis == 'y':
+        grad[:,1] = 1
+    if axis == 'z':
+        grad[:,2] = 1
+
+    return grad
+
+def grad_sine_1d(p, m, axis):
+    grad = np.zeros_like(p)
+    if axis == 'x':
+        grad[:,0] = m*np.pi*np.cos(m*np.pi*p[:,0])
+    if axis == 'y':
+        grad[:,1] = m*np.pi*np.cos(p[:,1])
+    if axis == 'z':
+        grad[:,2] = m*np.pi*np.cos(p[:,2])
+
+    return grad
+
+def grad_sine_3d(p, m):
+    # Assumes the scaling factor for the sine function is constant in all axes
+    grad = np.zeros_like(p)
+    grad[:,0] = m*np.pi*np.cos(m*np.pi*p[:,0])*np.sin(m*np.pi*p[:,1])*np.sin(m*np.pi*p[:,2])
+    grad[:,1] = m*np.pi*np.sin(m*np.pi*p[:,0])*np.cos(m*np.pi*p[:,1])*np.sin(m*np.pi*p[:,2])
+    grad[:,2] = m*np.pi*np.sin(m*np.pi*p[:,0])*np.sin(m*np.pi*p[:,1])*np.cos(m*np.pi*p[:,2])
+
+    return grad
+
+# Deprecated functions for computing the approximate solution
 def get_distances(entity_dim, pts, surf_idx):
         logger.info('Getting distances for surface ' + str(surf_idx))
         pts_on_surf = gm.getClosestPoint(entity_dim, surf_idx, pts.ravel())[0].reshape((pts.shape[0],3))
@@ -78,48 +147,6 @@ def approx_sol_E_field(mesh, case, u1, u2):
         p = mesh['pcg'][:, 2]
 
     return linear_fcn(x1, x2, u1, u2, p)[:,None]
-
-def forcing_zero(p):
-    return np.zeros((p.shape[0], 1))
-
-def exact_linear(p, axis):
-    if axis == 'x':
-        return p[:,0]
-    elif axis == 'y':
-        return p[:,1]
-    elif axis == 'z':
-        return p[:, 2]
-
-def exact_cube_mod_sine(p, m=1.5):
-    x = p[:, 0]
-    y = p[:, 1]
-    z = p[:, 2]
-    exact = np.sin(m*np.pi*x)# * np.sin(n*np.pi*y) * np.sin(l*np.pi*z)
-    return exact
-
-def forcing_cube_mod_sine(p, m=1.5):
-    forcing_cube = (m**2)*np.pi**2*exact_cube_mod_sine(p, m)        # We can do this because of the particular sin functions chosen for the exact solution
-    return forcing_cube[:, None]   # returns as column vector
-
-def exact_sine_cube(p):
-    m = 1
-    n = 1
-    l = 1
-
-    x = p[:, 0]
-    y = p[:, 1]
-    z = p[:, 2]
-    exact = np.sin(m*np.pi*x) * np.sin(n*np.pi*y) * np.sin(l*np.pi*z)
-    return exact
-
-def forcing_sine_cube(p):
-    # Note: doesn't take kappa into account, might add in later
-    m = 1
-    n = 1
-    l = 1
-
-    forcing_cube = (m**2+n**2+l**2)*np.pi**2*exact_sine_cube(p)        # We can do this because of the particular sin functions chosen for the exact solution
-    return forcing_cube[:, None]   # returns as column vector
 
 
 if __name__ == '__main__':
