@@ -194,7 +194,7 @@ try:
     ########## CALC DERIVATIVES ##########
     logger.info('Calculating derivatives')
 
-    grad, grad_mag = cg_gradient.calc_gradient(mesh, master, sol[:,None], ndim, solver, solver_tol)
+    grad, grad_mag = cg_gradient.calc_gradient(mesh, master, sol, ndim, solver, solver_tol)
 
     e_field = -grad # Sign flip, E = -grad(potential)
     result_out = np.concatenate((sol, e_field), axis=1)
@@ -219,7 +219,7 @@ try:
         viz.visualize(mesh_face, visorder, surf_viz_labels, vis_filename+'_surface', call_pv, face_scalars, None, type='surface_mesh') # Can only have scalars on a surface mesh
 
         logger.info('Saving surface mesh to disk')
-        with open(vis_filename + 'surface_mesh', 'w+b') as file:
+        with open(vis_filename + '_surface_mesh', 'w+b') as file:
             pickle.dump(mesh_face, file)
 
         with open(vis_filename + '_surface_scalars.npy', 'wb') as file:
