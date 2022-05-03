@@ -81,7 +81,7 @@ def extract_surfaces(mesh, master, face_groups, case, field, return_normal_quant
     mesh_face, face_field = cgmesh.cgmesh(mesh, faces, master, case='surface_mesh', field=field)
     mesh_face['porder'] = mesh['porder']
     mesh_face['ndim'] = mesh['ndim'] - 1
-    mesh_face['plocal'], mesh_face['tlocal'], _, _, __, _, _ = masternodes.masternodes(mesh_face['porder'], mesh_face['ndim'])
+    mesh_face['plocal'], mesh_face['tlocal'], _, _, mesh_face['corner'], _, _ = masternodes.masternodes(mesh_face['porder'], mesh_face['ndim'])
 
     if return_normal_quantity:
         face_field = compute_normal_derivatives(mesh, master, mesh_face, face_field, faces)

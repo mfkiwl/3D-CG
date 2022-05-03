@@ -240,13 +240,17 @@ try:
                 np.save(file, face_scalars)
         logger.info('')
 
+        logger.info('Saving surface mesh to disk')
+        with open(vis_filename + '_surface_mesh', 'w+b') as file:
+            pickle.dump(mesh_face, file)
+
+        if first_time:
+            first_time = False
+            
         del(sol)
         del(grad)
         del(grad_mag)
         gc.collect()
-
-        if first_time:
-            first_time = False
 
 except Exception as e:
     logger.exception('message')

@@ -28,12 +28,10 @@ from mkf_parallel2 import mkt2f_new
 from functools import partial
 from pathos.multiprocessing import ProcessingPool as Pool
 import multiprocessing as mp
-import quadrature
-import extract_surface
 
 logger = logging.getLogger(__name__)
 
-def generate_vtu(p, t, scalars, vectors, labels, viz_filename, call_pv):
+def generate_vtu(p, t, scalars, vectors, labels, viz_filename, call_pv, cell_data=None):
     if t.shape[1] == 3:  # 2D - mesh of triangles
         ndim = 2
         theta = np.concatenate((3*np.ones((t.shape[0], 1)), t), axis=1)
@@ -64,7 +62,10 @@ def generate_vtu(p, t, scalars, vectors, labels, viz_filename, call_pv):
     if vectors is not None:
         for ifield, field_index in enumerate(labels['vectors']):
             mesh.point_data[labels['vectors'][field_index]] = vectors[:,ndim*ifield:ndim*(ifield+1)]
-    
+    if cell_data is not None:
+        for ifield, field_index in enumerate(labels['cell_data']):
+            mesh.cell_data[labels['cell_data'][field_index]] = cell_data[:,ifield]
+
     # Name assignment must be set after all the datasets are loaded because every field is loaded in as 'scalars' initially.
     if scalars is not None:
         mesh.set_active_scalars(labels['scalars'][0])
