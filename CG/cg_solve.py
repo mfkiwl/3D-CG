@@ -9,6 +9,7 @@ from pathos.multiprocessing import ProcessingPool as Pool
 import time
 import logging
 import solvers
+import gc
 
 logger = logging.getLogger(__name__)
 iter_count = 0
@@ -63,7 +64,7 @@ def vissparse(A):
     plt.spy(A)
     plt.show()
 
-def cg_solve(master, mesh, forcing, param, ndim, outdir, buildAF=True, solver='amg', solver_tol=1e-7):
+def cg_solve(master, mesh, forcing, param, ndim, outdir, casename, buildAF=True, solver='amg', solver_tol=1e-7):
     global last_x
     last_x = 0
     if mesh['porder'] == 0:
@@ -108,20 +109,20 @@ def cg_solve(master, mesh, forcing, param, ndim, outdir, buildAF=True, solver='a
         A, F = assign_bcs(master, mesh, A, F, issparse=True)
 
         logger.info('Saving F post BCs...')
-        with open(outdir+ 'F_postBCs.npy', 'wb') as file:
+        with open(outdir+ 'F_postBCs_'+casename+'.npy', 'wb') as file:
             np.save(file, F)
 
         logger.info('Saving A post BCs...')
-        save_npz(outdir + 'A_postBCs.npz', A.asformat('csr'))
+        save_npz(outdir + 'A_postBCs_'+casename+'.npz', A.asformat('csr'))
         
         logger.info('Done saving A, F')
 
     else:
         # Read from disk
         logger.info('Reading A and F from disk')
-        with open(outdir + 'F_postBCs.npy', 'rb') as file:
+        with open(outdir + 'F_postBCs_'+casename+'.npy', 'rb') as file:
             F = np.load(file)
-        A = load_npz(outdir + 'A_postBCs.npz').asformat('lil')
+        A = load_npz(outdir + 'A_postBCs_'+casename+'.npz').asformat('lil')
 
     ########## SOLVE ##########
     logger.info('Solving with ' + solver)
@@ -130,5 +131,8 @@ def cg_solve(master, mesh, forcing, param, ndim, outdir, buildAF=True, solver='a
 
     sol = solvers.solve(A, F, solver_tol, solver)
 
+    del(A)
+    del(F)
+    gc.collect()
 
     return sol

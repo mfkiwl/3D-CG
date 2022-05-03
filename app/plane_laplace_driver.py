@@ -1,8 +1,10 @@
 import sys
 from pathlib import Path
 import numpy as np
-
-from py import process
+import logging
+import datetime
+import yaml
+import gc
 
 # Finding the sim root directory
 cwd = Path.cwd()
@@ -18,10 +20,6 @@ sys.path.append(str(sim_root_dir.joinpath('viz')))
 sys.path.append(str(sim_root_dir.joinpath('CG')))
 sys.path.append(str(sim_root_dir.joinpath('logging')))
 sys.path.append(str(sim_root_dir.joinpath('postprocessing')))
-import logger_cfg
-import logging
-import datetime
-import yaml
 
 ########## INITIALIZE LOGGING ##########
 SLURM_JOB_ID = sys.argv[1]
@@ -38,7 +36,7 @@ with open(config_file, 'r') as stream:
 
 casename = config_dict['casename']
 meshfile = config_dict['meshfile']
-case_select = config_dict['case_select']
+# case_select = config_dict['case_select']
 outdir = config_dict['outdir']
 process_mesh = config_dict['process_mesh']
 buildAF = config_dict['buildAF']
@@ -64,7 +62,7 @@ if 'scale_factor' in config_dict:   # Allows the mesh scale factor to be entered
 else:
     fuselage_dia = float(config_dict['fuselage_dia'])
     fuselage_pts = config_dict['fuselage_pts']
-    d_fuselage_msh= np.linalg.norm(np.asarray(fuselage_pts[0])-np.asarray(fuselage_pts[1]))
+    d_fuselage_msh= np.linalg.norm(np.asarray(fuselage_pts[0]).astype(np.float)-np.asarray(fuselage_pts[1]).astype(np.float))
     scale_factor = fuselage_dia/d_fuselage_msh    # Normalize mesh by the fuselage radius and rescale so that mesh dimensions are in meters
 
 bdry = (x_minus_face, x_plus_face, y_minus_face, y_plus_face, z_minus_face, z_plus_face)
@@ -78,10 +76,12 @@ if 'surf_viz_labels' in config_dict:
 else:
     surf_viz_labels = None
 
+import logger_cfg
 logger = logger_cfg.initialize_logger(casename)
 logger.info('*************************** INITIALIZING SIM ' +str(datetime.datetime.now())+' ***************************')
 logger.info('Starting imports...')
 
+# These imports take a while, so we want to log the initialization first
 import viz
 from cgmesh import cgmesh
 import mkmesh_cube
@@ -106,124 +106,147 @@ logger.info('Config file path: ' + config_file)
 
 try:
     # Check whether the specified path exists or not
-    if not os.path.exists('out/'):
-        os.makedirs('out/')
-        logger.info('out/ directory not present, created...')
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+        logger.info(outdir+' directory not present, created...')
 
+    outdir_top = outdir
     ########## TOP LEVEL SIM SETUP ##########
-    vis_filename = outdir+casename
 
-    nbc = {face:0 for face in bdry}
+    cases = ['Phi', 'Ex', 'Ey', 'Ez']
+    first_time = True
 
-    if case_select == 'Phi':
-        dbc = {face:1 for face in surf_face_pg}
-        dbc.update(nbc)     # Concatenating two dictionaries together
-        nbc = {}
-    elif case_select == 'Ex':
-        dbc = {face:0 for face in surf_face_pg}
-        nbc[x_minus_face] = -1
-        nbc[x_plus_face] = 1
-    elif case_select == 'Ey':
-        dbc = {face:0 for face in surf_face_pg}
-        nbc[y_minus_face] = -1
-        nbc[y_plus_face] = 1
-    elif case_select == 'Ez':
-        dbc = {face:0 for face in surf_face_pg}
-        nbc[z_minus_face] = -1
-        nbc[z_plus_face] = 1
+    for case_select in cases:      # Top level loop through each case
+        logger.info('----------------------------- CASE: ' + case_select +' -----------------------------')
 
-    ########## LOGGING SIM PARAMETERS ##########
-    logger.info('Case type: '+case_select)
-    logger.info('Dim: '+str(ndim))
-    logger.info('porder: '+str(porder))
-    logger.info('Solver: ' + solver)
-    logger.info('Solver tolerance: ' + str(solver_tol))
-    logger.info('Mesh scale factor: ' + str(scale_factor))
-    logger.info('Dirichlet BCs: ' + str(dbc))
-    logger.info('Neumann BCs: ' + str(nbc))
-    logger.info('Physics parameters: ' + str(phys_param))
-    logger.info('Build mesh y/n: ' +str(process_mesh))
-    logger.info('Construct A and F y/n: ' +str(buildAF))
-    logger.info('Compute solution y/n: ' +str(compute_sol))
-    logger.info('Call paraview when done y/n: ' +str(call_pv))
-    logger.info('Visualization porder: ' + str(visorder))
-    logger.info('Visualization filename: ' + vis_filename + '.vtu')
-    logger.info('Volume Visualization labels: ' + str(viz_labels))
-    logger.info('Mesh file: '+meshfile)
+        outdir = outdir_top + case_select + '/'
+        # Check whether the specified path exists or not
+        if not os.path.exists(outdir):
+            os.makedirs(outdir)
+            logger.info(outdir + ' directory not present, created...')
 
-    if compute_sol:
-        ########## CREATE MESH ##########
-        if 'falcon' in meshfile:
-            mesh = mkmesh_falcon.import_falcon_mesh(porder, ndim, meshfile, process_mesh)
+        vis_filename = outdir+casename+'_'+case_select
+
+        nbc = {face:0 for face in bdry}
+
+        if case_select == 'Phi':
+            dbc = {face:1 for face in surf_face_pg}
+            dbc.update(nbc)     # Concatenating two dictionaries together
+            nbc = {}
+        elif case_select == 'Ex':
+            dbc = {face:0 for face in surf_face_pg}
+            nbc[x_minus_face] = -1
+            nbc[x_plus_face] = 1
+        elif case_select == 'Ey':
+            dbc = {face:0 for face in surf_face_pg}
+            nbc[y_minus_face] = -1
+            nbc[y_plus_face] = 1
+        elif case_select == 'Ez':
+            dbc = {face:0 for face in surf_face_pg}
+            nbc[z_minus_face] = -1
+            nbc[z_plus_face] = 1
+
+        ########## LOGGING SIM PARAMETERS ##########
+        logger.info('Dim: '+str(ndim))
+        logger.info('porder: '+str(porder))
+        logger.info('Solver: ' + solver)
+        logger.info('Solver tolerance: ' + str(solver_tol))
+        logger.info('Mesh scale factor: ' + str(scale_factor))
+        logger.info('Dirichlet BCs: ' + str(dbc))
+        logger.info('Neumann BCs: ' + str(nbc))
+        logger.info('Physics parameters: ' + str(phys_param))
+        logger.info('Build mesh y/n: ' +str(process_mesh))
+        logger.info('Construct A and F y/n: ' +str(buildAF))
+        logger.info('Compute solution y/n: ' +str(compute_sol))
+        logger.info('Call paraview when done y/n: ' +str(call_pv))
+        logger.info('Visualization porder: ' + str(visorder))
+        logger.info('Visualization filename: ' + vis_filename + '.vtu')
+        logger.info('Volume Visualization labels: ' + str(viz_labels))
+        logger.info('Mesh file: '+meshfile)
+
+        if compute_sol:
+            ########## CREATE MESH ##########
+            if first_time:      # Only build the mesh the first time
+                if 'falcon' in meshfile:
+                    mesh = mkmesh_falcon.import_falcon_mesh(porder, ndim, meshfile, process_mesh)
+                else:
+                    mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, process_mesh, scale_factor)
+                logger.info('Preparing master data structure...')
+                master = mkmaster.mkmaster(mesh, ndim=3, pgauss=2*mesh['porder'])
+
+            mesh['dbc'] = dbc
+            mesh['nbc'] = nbc
+
+            logger.info('Degrees of freedom: ' + str(mesh['pcg'].shape[0]))
+
+            ########## SOLVE ##########
+            
+            sol = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_zero, phys_param, ndim, outdir, case_select, buildAF, solver, solver_tol)
+
+            ########## SAVE DATA ##########
+
+            # NOTE: in the future uh will need to be reshaped into a nplocal x numvisfields x numel when the derivatives are added
+            with open(outdir+'mesh_'+case_select, 'wb') as file:
+                pickle.dump(mesh, file)
+            with open(outdir+'master', 'wb') as file:
+                pickle.dump(master, file)
+            with open(outdir+'sol_'+case_select, 'wb') as file:
+                pickle.dump(sol, file)
+            logger.info('Wrote solution to file...')
         else:
-            mesh = mkmesh_cube.mkmesh_cube(porder, ndim, meshfile, process_mesh, scale_factor)
-        mesh['dbc'] = dbc
-        mesh['nbc'] = nbc
+            ########## LOADING SOLUTION ##########
 
-        logger.info('Degrees of freedom: ' + str(mesh['pcg'].shape[0]))
+            logger.info('Reading solution from file...')
 
-        logger.info('Preparing master data structure...')
-        master = mkmaster.mkmaster(mesh, ndim=3, pgauss=2*mesh['porder'])
+            with open(outdir+'mesh_'+case_select, 'rb') as file:
+                mesh = pickle.load(file)
+            with open(outdir+'master', 'rb') as file:
+                master = pickle.load(file)
+            with open(outdir+'sol_'+case_select, 'rb') as file:
+                sol = pickle.load(file)
 
-        ########## SOLVE ##########
-        
-        sol = cg_solve.cg_solve(master, mesh, domain_helper_fcns.forcing_zero, phys_param, ndim, outdir, buildAF, solver, solver_tol)
+        ########## CALC DERIVATIVES ##########
+        logger.info('Calculating derivatives')
 
-        ########## SAVE DATA ##########
+        grad, grad_mag = cg_gradient.calc_gradient(mesh, master, sol, ndim, solver, solver_tol)
 
-        # NOTE: in the future uh will need to be reshaped into a nplocal x numvisfields x numel when the derivatives are added
-        with open(outdir+'mesh', 'wb') as file:
-            pickle.dump(mesh, file)
-        with open(outdir+'master', 'wb') as file:
-            pickle.dump(master, file)
-        with open(outdir+'sol', 'wb') as file:
-            pickle.dump(sol, file)
-        logger.info('Wrote solution to file...')
-    else:
-        ########## LOADING SOLUTION ##########
+        e_field = -grad # Sign flip, E = -grad(potential)
+        result_out = np.concatenate((sol, e_field), axis=1)
 
-        logger.info('Reading solution from file...')
+        with open(vis_filename + '_solution.npy', 'wb') as file:
+            np.save(file, result_out)
+        logger.info('Wrote solution to /out')
 
-        with open(outdir+'mesh', 'rb') as file:
-            mesh = pickle.load(file)
-        with open(outdir+'master', 'rb') as file:
-            master = pickle.load(file)
-        with open(outdir+'sol', 'rb') as file:
-            sol = pickle.load(file)
+        ########## VISUALIZE SOLUTION ##########
 
-    ########## CALC DERIVATIVES ##########
-    logger.info('Calculating derivatives')
+        logger.info('Generating .VTU file of solution...')
+        viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol, vectors=e_field)
 
-    grad, grad_mag = cg_gradient.calc_gradient(mesh, master, sol[:,None], ndim, solver, solver_tol)
+        if surf_viz_labels is not None:
+            logger.info('Visualizing aircraft surface fields')
 
-    e_field = -grad # Sign flip, E = -grad(potential)
-    result_out = np.concatenate((sol, e_field), axis=1)
+            mesh_face, face_scalars = extract_surface.extract_surfaces(mesh, master, surf_face_pg, 'pg', sol)
+            __, face_field_dot_normal = extract_surface.extract_surfaces(mesh, master, surf_face_pg, 'pg', e_field, return_normal_quantity=True)
+            
+            face_scalars = np.concatenate((face_scalars, face_field_dot_normal), axis=1)
 
-    with open(vis_filename + '_solution.npy', 'wb') as file:
-        np.save(file, result_out)
-    logger.info('Wrote solution to /out')
+            viz.visualize(mesh_face, visorder, surf_viz_labels, vis_filename+'_surface', call_pv, face_scalars, None, type='surface_mesh') # Can only have scalars on a surface mesh
 
-    ########## VISUALIZE SOLUTION ##########
+            logger.info('Saving surface mesh to disk')
+            with open(vis_filename + 'surface_mesh', 'w+b') as file:
+                pickle.dump(mesh_face, file)
 
-    logger.info('Generating .VTU file of solution...')
-    viz.visualize(mesh, visorder, viz_labels, vis_filename, call_pv, scalars=sol, vectors=e_field)
+            with open(vis_filename + '_surface_scalars.npy', 'wb') as file:
+                np.save(file, face_scalars)
+        logger.info('')
 
-    if surf_viz_labels is not None:
-        logger.info('Visualizing aircraft surface fields')
+        del(sol)
+        del(grad)
+        del(grad_mag)
+        gc.collect()
 
-        mesh_face, face_scalars = extract_surface.extract_surfaces(mesh, master, surf_face_pg, 'pg', sol)
-        __, face_field_dot_normal = extract_surface.extract_surfaces(mesh, master, surf_face_pg, 'pg', e_field, return_normal_quantity=True)
-        
-        face_scalars = np.concatenate((face_scalars, face_field_dot_normal), axis=1)
-
-        viz.visualize(mesh_face, visorder, surf_viz_labels, vis_filename+'_surface', call_pv, face_scalars, None, type='surface_mesh') # Can only have scalars on a surface mesh
-
-        logger.info('Saving surface mesh to disk')
-        with open(vis_filename + 'surface_mesh', 'w+b') as file:
-            pickle.dump(mesh_face, file)
-
-        with open(vis_filename + '_surface_scalars.npy', 'wb') as file:
-            np.save(file, face_scalars)
+        if first_time:
+            first_time = False
 
 except Exception as e:
     logger.exception('message')
