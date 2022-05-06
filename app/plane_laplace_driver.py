@@ -134,17 +134,17 @@ try:
             dbc.update(nbc)     # Concatenating two dictionaries together
             nbc = {}
         elif case_select == 'Ex':
-            dbc = {face:0 for face in surf_face_pg}
-            nbc[x_minus_face] = -1
-            nbc[x_plus_face] = 1
+            dbc = {face:0 for face in surf_face_pg}     # NOTE: the sign of the neumann BCs is so that the sign of E is along +X, +Y, +Z, in the opposite direction of the potential gradient!
+            nbc[x_minus_face] = 1
+            nbc[x_plus_face] = -1
         elif case_select == 'Ey':
             dbc = {face:0 for face in surf_face_pg}
-            nbc[y_minus_face] = -1
-            nbc[y_plus_face] = 1
+            nbc[y_minus_face] = 1
+            nbc[y_plus_face] = -1
         elif case_select == 'Ez':
             dbc = {face:0 for face in surf_face_pg}
-            nbc[z_minus_face] = -1
-            nbc[z_plus_face] = 1
+            nbc[z_minus_face] = 1
+            nbc[z_plus_face] = -1
 
         ########## LOGGING SIM PARAMETERS ##########
         logger.info('Dim: '+str(ndim))
@@ -226,14 +226,14 @@ try:
             logger.info('Visualizing aircraft surface fields')
 
             mesh_face, face_scalars = extract_surface.extract_surfaces(mesh, master, surf_face_pg, 'pg', sol)
-            __, face_field_dot_normal = extract_surface.extract_surfaces(mesh, master, surf_face_pg, 'pg', e_field, return_normal_quantity=True)
-            
+            __, face_field_dot_normal = extract_surface.extract_surfaces(mesh, master, surf_face_pg, 'pg', e_field, return_normal_quantity=True, element_normal_dot_surface_normal=-1)   # Accounts for the outward facing normal being the surface inward facing normal - will need to flip on the plane.
+
             face_scalars = np.concatenate((face_scalars, face_field_dot_normal), axis=1)
 
             viz.visualize(mesh_face, visorder, surf_viz_labels, vis_filename+'_surface', call_pv, face_scalars, None, type='surface_mesh') # Can only have scalars on a surface mesh
 
             logger.info('Saving surface mesh to disk')
-            with open(vis_filename + 'surface_mesh', 'w+b') as file:
+            with open(vis_filename + '_surface_mesh', 'w+b') as file:
                 pickle.dump(mesh_face, file)
 
             with open(vis_filename + '_surface_scalars.npy', 'wb') as file:
@@ -251,6 +251,7 @@ try:
         del(grad)
         del(grad_mag)
         gc.collect()
+
 
 except Exception as e:
     logger.exception('message')

@@ -18,4 +18,3 @@ d_R = 0.75;        %Artificial constraint to limit extension of surface
                    %integration for corona charge calculation [],
                    %nondimensionalized with Rf
 end
-

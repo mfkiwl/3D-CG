@@ -19,7 +19,7 @@ clc
 %%%%%%%%% THESE ARE THE INPUTS OF THE MODEL  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%      
                                                                                                 %%
 % Dimensions of aircraft, geometry (Rf: fuselage radius, C: capacitance)                        %%
-Rf  =  1.25;                     % Fuselage radius [m]; for this particular geometry,            %%
+Rf  =  1.25;                     % Fuselage radius [m]; for this particular geometry,           %%
                                 % the wing span is 18*Rf                                        %%           
                                                                                                 %%
 LAPLACE=load('falconfine.mat'); % Results from Laplace solver given geometry                    %%
@@ -30,8 +30,8 @@ LAPLACE.dgn = LAPLACE.dgn{1};                                                   
                                                                                                 %%
 % Model orientation in external field and initial charge                                        %%
 chi   = 0;      % Net charge in Coulomb                                                         %%
-phi   = 180;      % Yaw angle in degrees (see diagram)                                            %%
-theta = 50;      % Pitch angle in degrees (see diagram)                                          %%
+phi   = 180;      % Yaw angle in degrees (see diagram)                                          %%
+theta = 50;      % Pitch angle in degrees (see diagram)                                         %%
                                                                                                 %%
 % Choice of leader criterion based on surface charge (int23 = 2) or volume charge (int23 = 3)   %%      
 int23   =3;                                                                                     %%
@@ -70,7 +70,7 @@ x_L1       = xdischarge; % Attachment point
 S_L1 = S_L1(ind_L1);
 
 % Double check corona inception
-[~ ,~ ,~ ,~ ,~ ,~ ,Q1D_L1,Qlim_L1] = Corona_line(chi,phi,theta,Einf,x_L1,dp,LAPLACE.UDG,LAPLACE.master,LAPLACE.msh,Rf);
+% [~ ,~ ,~ ,~ ,~ ,~ ,Q1D_L1,Qlim_L1] = Corona_line(chi,phi,theta,Einf,x_L1,dp,LAPLACE.UDG,LAPLACE.master,LAPLACE.msh,Rf);
 
  % Is entry point positive or negative?
 bias_s = sign(-Idischarge); %if positive leader incepted, body gets negatively charged
@@ -92,7 +92,7 @@ Qac        = chi_L2*1e3*Rf*C; %[C] Aircraft charge at 2nd leader inception (due 
 [ dp ] = select_direction(ind_L2);
 
 % Double check corona inception
-[~ ,~ ,~ ,~ ,~ ,~ ,Q1D_L2,Qlim_L2] = Corona_line(chi_L2,phi,theta,Einf,x_L2,dp,LAPLACE.UDG,LAPLACE.master,LAPLACE.msh,Rf);
+% [~ ,~ ,~ ,~ ,~ ,~ ,Q1D_L2,Qlim_L2] = Corona_line(chi_L2,phi,theta,Einf,x_L2,dp,LAPLACE.UDG,LAPLACE.master,LAPLACE.msh,Rf);
 
 % Display results
 Qac_mC = Qac*1e3; %Aircraft charge at 2nd leader inception in mC
