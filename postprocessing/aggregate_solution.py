@@ -91,7 +91,6 @@ def aggregate_sol(case_parent_dir, case_name, outdir):
     fields['Ey_grad_normal_surf'] = Ey_surf[:,1]  # 1D vector
     fields['Ez_grad_normal_surf'] = Ez_surf[:,1]  # 1D vector 
 
-
     fields['Phi_pot_vol'] = Phi_vol[:,0]  # 1D vector
     fields['Ex_pot_vol'] = Ex_vol[:,0]  # 1D vector
     fields['Ey_pot_vol'] = Ey_vol[:,0]  # 1D vector

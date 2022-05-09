@@ -50,7 +50,7 @@ def compute_normal_derivatives(mesh_vol, master_vol, mesh_face, vector_field, fa
     # Take dot(grad, normal) to find the normal derivative
     normal_derivative_qty = np.sum(vector_field*normals_pcg, axis=1)[:,None]
 
-    return normal_derivative_qty*element_normal_dot_surface_normal
+    return normal_derivative_qty*element_normal_dot_surface_normal, normals_pcg
 
 def extract_surfaces(mesh, master, face_groups, case, field, return_normal_quantity=False, element_normal_dot_surface_normal=1):   # Accounts for the outward facing normal being the surface inward facing normal - will need to flip on the plane.):
     """
@@ -84,7 +84,9 @@ def extract_surfaces(mesh, master, face_groups, case, field, return_normal_quant
     mesh_face['plocal'], mesh_face['tlocal'], _, _, mesh_face['corner'], _, _ = masternodes.masternodes(mesh_face['porder'], mesh_face['ndim'])
 
     if return_normal_quantity:
-        face_field = compute_normal_derivatives(mesh, master, mesh_face, face_field, faces, element_normal_dot_surface_normal)
+        face_field, normals = compute_normal_derivatives(mesh, master, mesh_face, face_field, faces, element_normal_dot_surface_normal)
+
+    mesh_face['normal_vectors'] = normals
 
     return mesh_face, face_field
     

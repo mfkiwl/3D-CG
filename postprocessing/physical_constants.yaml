@@ -1,9 +1,9 @@
 # Thresholds for leader inception (chosen at standard conditions) and universal constants
-eps0: 8.85e-12    # vacuum permittivity [F/m]
-pos_corona_stability_field: 450         # stability field of positive corona [kV/m]
-neg_corona_stability_field: 750         # stability field of negative corona [kV/m]
+eps0: 8.85418782e-12    # vacuum permittivity [F/m]
+pos_corona_stability_field: 450.0e+3         # stability field of positive corona [V/m]
+neg_corona_stability_field: -750.0e+3         # stability field of negative corona [V/m]
 Q_pos_crit_leader_incep: 1.0e-6        # Critical corona charge for positive leader inception [C]
 Q_neg_crit_leader_incep_factor: 4       # Critical corona charge for negative leader inception [C]
-d_R: 0.75        # Artificial constraint to limit extension of surface integration for corona charge calculation [], nondimensionalized with Rf
-Qac_0: 0
+d_R: 0.5        # Artificial constraint to limit extension of surface integration for corona charge calculation [], nondimensionalized with Rf
+# Qac_0: 0
 dQ_0: 1.0e-3

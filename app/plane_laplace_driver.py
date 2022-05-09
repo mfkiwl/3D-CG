@@ -177,6 +177,11 @@ try:
             mesh['dbc'] = dbc
             mesh['nbc'] = nbc
 
+            if 'scale_factor' in config_dict:   # Allows the mesh scale factor to be entered manually instead of from a set of points in the mesh
+                mesh['r_fuselage'] = 1
+            else:
+                mesh['r_fuselage'] = fuselage_dia/2
+
             logger.info('Degrees of freedom: ' + str(mesh['pcg'].shape[0]))
 
             ########## SOLVE ##########
@@ -231,6 +236,11 @@ try:
             face_scalars = np.concatenate((face_scalars, face_field_dot_normal), axis=1)
 
             viz.visualize(mesh_face, visorder, surf_viz_labels, vis_filename+'_surface', call_pv, face_scalars, None, type='surface_mesh') # Can only have scalars on a surface mesh
+
+            if 'scale_factor' in config_dict:   # Allows the mesh scale factor to be entered manually instead of from a set of points in the mesh
+                mesh_face['r_fuselage'] = 1
+            else:
+                mesh_face['r_fuselage'] = fuselage_dia/2
 
             logger.info('Saving surface mesh to disk')
             with open(vis_filename + '_surface_mesh', 'w+b') as file:
