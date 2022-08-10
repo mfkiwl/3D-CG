@@ -12,13 +12,13 @@ import matplotlib.pyplot as plt
 
 def run_convergence_test(func, rundir):
 
-    if 'cube_sine_homogeneous_dirichlet' not in rundir:
-        continue
+    # if 'cube_sine_homogeneous_dirichlet' not in rundir:
+    #     continue
     
     numel_vec = np.array([24, 100, 4591, 36538]).astype(np.int)
 
-    # with open('convergence_data.npy', 'rb') as file:
-    #     errors = np.load(file)
+    with open('./old_out/{}.npy'.format(rundir), 'rb') as file:
+        errors = np.load(file, allow_pickle=True)
 
     print('Running convergence test for {} in ../{}'.format(func.__name__, rundir))
 
@@ -26,20 +26,20 @@ def run_convergence_test(func, rundir):
     # numel_vec = np.array([24, 100, 4591]).astype(np.int)
     h_vec = (6/numel_vec)**(1/3)
 
-    errors = np.zeros((porder_vec.shape[0], h_vec.shape[0]))
+    # errors = np.zeros((porder_vec.shape[0], h_vec.shape[0]))
 
-    os.chdir('../{}'.format(rundir))
-    for ip, porder in enumerate(porder_vec):
-        for inum, numel in enumerate(numel_vec):
-            print(porder)
-            print(numel)
-            print()
-            if porder == 1:
-                solver = 'direct'
-            else:
-                solver = 'gmres'
-            errors[ip, inum] = func(porder, 'cube'+str(numel), solver)
-    os.chdir('../convergence_testing')
+    # os.chdir('../{}'.format(rundir))
+    # for ip, porder in enumerate(porder_vec):
+    #     for inum, numel in enumerate(numel_vec):
+    #         print(porder)
+    #         print(numel)
+    #         print()
+    #         if porder == 1:
+    #             solver = 'direct'
+    #         else:
+    #             solver = 'gmres'
+    #         errors[ip, inum] = func(porder, 'cube'+str(numel), solver)
+    # os.chdir('../convergence_testing')
 
     log_errors = np.log10(errors)[:,np.array([0,-1])]
     log_h = np.log10(h_vec)[np.array([0,-1])]
@@ -59,7 +59,7 @@ def run_convergence_test(func, rundir):
     plt.legend()
     plt.title("Convergence plot")
     plt.savefig('./out/{}.png'.format(rundir))
-    # plt.show()
+    plt.show()
 
     with open('./out/{}.npy'.format(rundir), 'wb') as file:
         np.save(file, errors)

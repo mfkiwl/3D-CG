@@ -82,6 +82,7 @@ def elem_grad_calc(dgnodes, master, sol, ndim, idx):
     grad_e = np.zeros((nplocal, ndim))
 
     for i in np.arange(3):
+                         # Mass matrix  *  gradient
         grad_e[:,i] = PHI.T@W@JAC_DET@PHI@grad_nodal[:,i]
 
     # Returns (nplocal x (nplocal + ndim)) array, with the three RHS vectors present

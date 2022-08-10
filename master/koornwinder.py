@@ -188,7 +188,7 @@ def koornwinder3d(pts_eval, porder):
     3) KPs sampled at GQ pts (exclusively interior)
     4) KP derivatives sampled at GQ pts (exclusively interior)
 
-    Case 1 is used for interpolating onto a higher mesh
+    Case 1 is used for interpolating onto a higher mesh and when constructing the nodal basis functions themselves
     Case 2 is used for computing normal vectors and the gradients of a scalar field                 THIS IS THE PROBLEM - initially when this code was written, this use case wasn't envisioned and wasn't a problem because of the known issue with sampling the derivatives at the corners
     Case 3 is used during normal construction of the elemental matrices during matrix assembly
     Case 4 is used during normal construction of the elemental matrices during matrix assembly

@@ -85,8 +85,7 @@ def extract_surfaces(mesh, master, face_groups, case, field, return_normal_quant
 
     if return_normal_quantity:
         face_field, normals = compute_normal_derivatives(mesh, master, mesh_face, face_field, faces, element_normal_dot_surface_normal)
-
-    mesh_face['normal_vectors'] = normals
+        mesh_face['normal_vectors'] = normals
 
     return mesh_face, face_field
     

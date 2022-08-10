@@ -64,7 +64,7 @@ def vissparse(A):
     plt.spy(A)
     plt.show()
 
-def cg_solve(master, mesh, forcing, param, ndim, outdir, casename, buildAF=True, solver='amg', solver_tol=1e-7):
+def cg_solve(master, mesh, forcing, param, ndim, outdir, casename='test', buildAF=True, solver='amg', solver_tol=1e-7):
     global last_x
     last_x = 0
     if mesh['porder'] == 0:

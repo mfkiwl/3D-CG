@@ -179,9 +179,9 @@ def get_elem_face_normals(mesh_dgnodes, master, ndim, idx_tup):
 
     elif ndim == 3:
 
-        # Face number out of the total number of faces
-        if idx_tup[2] % 10000 == 0:
-            logger.info('Computing normal vector  for face '+ str(idx_tup[2]))
+        # # Face number out of the total number of faces
+        # if idx_tup[2] % 10000 == 0:
+        #     logger.info('Computing normal vector  for face '+ str(idx_tup[2]))
 
         elem_idx = idx_tup[0]
         face_idx = idx_tup[1]

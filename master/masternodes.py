@@ -140,7 +140,7 @@ def masternodes(porder, ndim):
             p2 = np.array([1, 0, 0])
             p3 = np.array([0, 1, 0])
             p4 = np.array([0, 0, 1])
-            p = np.array([p1, p2, p3, p4]).astype(np.float)
+            p = np.array([p1, p2, p3, p4]).astype(float)
             face_vectors = np.array([[p4-p2,p3-p2,np.cross(p4-p2,p3-p2)],
                                     [p4-p3,p1-p3,np.cross(p4-p3,p1-p3)],
                                     [p4-p1,p2-p1,np.cross(p4-p1,p2-p1)],
@@ -148,7 +148,7 @@ def masternodes(porder, ndim):
 
             p0_vec = np.array([p2, p3, p1, p1])
 
-            permface = np.zeros((plocface.shape[0], 4)).astype(np.int)  # 4 is the number of faces in a tet, no use in using a variable to set it because the code can only handle tets
+            permface = np.zeros((plocface.shape[0], 4)).astype(int)  # 4 is the number of faces in a tet, no use in using a variable to set it because the code can only handle tets
 
             for i, col in enumerate(plocal.T):
                 iface_node_idx = np.where(np.isclose(col, 0))[0]    # list of points on ith face
@@ -160,7 +160,7 @@ def masternodes(porder, ndim):
                 plf_transformed = np.around((pts_on_face -p0_vec[i,:])@np.linalg.inv(A), decimals=6)
                 plocface_rounded = np.around(plocface, decimals=6)
 
-                found_idx = np.zeros([plocface_rounded.shape[0]]).astype(np.int)
+                found_idx = np.zeros([plocface_rounded.shape[0]]).astype(int)
                 # Loop through each point and find which index it corresponds to in the master
                 for iloc_pt, loc_pt in enumerate(plocface_rounded):
                     found_idx[iloc_pt] = np.where(np.all(plf_transformed == loc_pt[None,:], axis=1))[0][0]
@@ -188,6 +188,12 @@ if __name__ == '__main__':
     porder = 3
     dim=3
     plocal, tlocal, plocface, tlocface, corner, permedge, perm = masternodes(porder, dim)
+
+    import sys
+    sys.path.append('../util')
+    import gmshwrite
+    gmshwrite.gmshwrite(plocal, tlocal, 'plocal3')
+    exit()
 
     # print('porder')
     # print(porder)

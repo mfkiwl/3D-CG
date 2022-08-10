@@ -1,8 +1,8 @@
 import numpy as np
 import sys
 sys.path.append('../../util')
-import gmsh
-from gmsh import model as gm
+# import gmsh
+# from gmsh import model as gm
 import pickle
 import helper
 import logging
